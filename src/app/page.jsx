@@ -12,7 +12,7 @@ import AuthForm from './components/AuthForm';
 import ProfileForm from './components/ProfileForm';
 import ChatBox from './components/ChatBox';
 import MessagesPanel from './components/MessagesPanel';
-import { ChatBubbleOvalLeftIcon } from '@heroicons/react/24/outline';
+import { ChatBubbleOvalLeftIcon } from '@heroicons/react/24/solid';
 
 export default function Home() {
   const [gigs, setGigs] = useState([]);

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { XMarkIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, PaperAirplaneIcon } from '@heroicons/react/24/solid';
 import { motion } from 'framer-motion';
 
 export default function ChatBox({ isOpen, onClose, currentUser, recipientId, recipientName }) {

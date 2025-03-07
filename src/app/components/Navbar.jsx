@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useState } from 'react';
-import { ChatBubbleOvalLeftIcon } from '@heroicons/react/24/outline';
+import { ChatBubbleOvalLeftIcon } from '@heroicons/react/24/solid';
 
 export default function Navbar({ onPostGig, onPostDemand, onLogOut, user, onToggleMessages }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

@@ -1,4 +1,4 @@
-import { ChatBubbleOvalLeftIcon } from '@heroicons/react/24/outline';
+import { ChatBubbleOvalLeftIcon } from '@heroicons/react/24/solid';
 
 export default function GigCard({ gig, onContactClick }) {
   console.log("Gig profile data:", gig.profile);

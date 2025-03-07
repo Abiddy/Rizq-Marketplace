@@ -1,11 +1,16 @@
 import './globals.css';
+import type { ReactNode } from 'react';
 
 export const metadata = {
-  title: 'Freelance Gigs App',
-  description: 'A premium platform for freelance opportunities',
+  title: 'Rizq Marketplace',
+  description: 'Connect with freelancers and clients',
 };
 
-export default function RootLayout({ children }) {
+interface RootLayoutProps {
+  children: ReactNode;
+}
+
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
       <body className="min-h-screen bg-gray-50 antialiased">{children}</body>
