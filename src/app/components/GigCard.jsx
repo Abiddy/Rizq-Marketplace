@@ -1,4 +1,6 @@
-export default function GigCard({ gig }) {
+import { ChatBubbleOvalLeftIcon } from '@heroicons/react/24/outline';
+
+export default function GigCard({ gig, onContactClick }) {
   console.log("Gig profile data:", gig.profile);
 
   return (
@@ -12,7 +14,7 @@ export default function GigCard({ gig }) {
           
           {/* Display profile info if available */}
           {gig.profile && (
-            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-700">
+            <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-gray-700">
               <div className="flex items-center">
                 {gig.profile?.avatar_url && (
                   <img 
@@ -32,6 +34,15 @@ export default function GigCard({ gig }) {
                   )}
                 </div>
               </div>
+              
+              {/* Contact Button */}
+              <button 
+                onClick={() => onContactClick(gig.user_id, gig.profile.full_name)}
+                className="text-indigo-400 hover:text-indigo-300 transition-colors flex items-center space-x-1 text-xs"
+              >
+                <ChatBubbleOvalLeftIcon className="w-4 h-4" />
+                <span>Contact</span>
+              </button>
             </div>
           )}
         </div>

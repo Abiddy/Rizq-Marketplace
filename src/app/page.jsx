@@ -10,6 +10,9 @@ import DemandForm from './components/DemandForm';
 import Navbar from './components/Navbar';
 import AuthForm from './components/AuthForm';
 import ProfileForm from './components/ProfileForm';
+import ChatBox from './components/ChatBox';
+import MessagesPanel from './components/MessagesPanel';
+import { ChatBubbleOvalLeftIcon } from '@heroicons/react/24/outline';
 
 export default function Home() {
   const [gigs, setGigs] = useState([]);
@@ -25,6 +28,18 @@ export default function Home() {
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [hasProfileInfo, setHasProfileInfo] = useState(false);
+  
+  // New state for mobile toggle
+  const [activeTab, setActiveTab] = useState('gigs');
+
+  // Add these state variables in the Home component
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatRecipientId, setChatRecipientId] = useState(null);
+  const [chatRecipientName, setChatRecipientName] = useState('');
+
+  // Add these new state variables
+  const [isMessagesOpen, setIsMessagesOpen] = useState(false);
+  const [isMessagesPanelMinimized, setIsMessagesPanelMinimized] = useState(false);
 
   // Fetch both gigs and demands
   useEffect(() => {
@@ -281,6 +296,58 @@ export default function Home() {
     setIsModalOpen(true);
   };
 
+  // Add this function to handle opening the chat
+  const handleContactClick = (userId, userName) => {
+    if (!user) {
+      setError('Please log in to contact users');
+      return;
+    }
+    
+    // Don't allow chatting with yourself
+    if (userId === user.id) {
+      setError('You cannot message yourself');
+      return;
+    }
+    
+    setChatRecipientId(userId);
+    setChatRecipientName(userName);
+    setIsChatOpen(true);
+  };
+
+  // Add this function to handle selecting a conversation
+  const handleSelectConversation = (userId, userName) => {
+    setChatRecipientId(userId);
+    setChatRecipientName(userName);
+    setIsChatOpen(true);
+    
+    // On mobile, close the messages panel when a conversation is selected
+    if (window.innerWidth < 768) {
+      setIsMessagesOpen(false);
+    }
+  };
+
+  // Add this function to toggle the messages panel
+  const toggleMessages = () => {
+    setIsMessagesOpen(!isMessagesOpen);
+    setIsMessagesPanelMinimized(false);
+  };
+
+  // Add this function to minimize/maximize the messages panel
+  const toggleMinimizeMessages = () => {
+    setIsMessagesPanelMinimized(!isMessagesPanelMinimized);
+  };
+
+  // Create a FloatingMessagesButton component for desktop
+  const FloatingMessagesButton = () => (
+    <button
+      onClick={toggleMessages}
+      className="hidden md:flex fixed bottom-4 right-4 z-30 bg-indigo-600 text-white rounded-full p-3 shadow-lg hover:bg-indigo-700 transition-colors"
+      aria-label="Messages"
+    >
+      <ChatBubbleOvalLeftIcon className="w-6 h-6" />
+    </button>
+  );
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500/5 to-purple-500/5">
@@ -297,10 +364,36 @@ export default function Home() {
         onPostDemand={() => handleCreatePostClick(false)}
         onProfile={() => setShowProfileForm(true)}
         onLogOut={logOut}
+        onToggleMessages={toggleMessages}
       />
       
-      <div className="p-6 max-w-[1600px] mx-auto">
-        <div className="grid grid-cols-2 gap-6">
+      {/* Mobile Toggle */}
+      <div className="md:hidden bg-[#181818] p-2 flex border-b border-gray-800">
+        <button
+          onClick={() => setActiveTab('gigs')}
+          className={`flex-1 py-2 text-sm rounded-l-md ${
+            activeTab === 'gigs' 
+              ? 'bg-orange-500/20 text-white font-medium' 
+              : 'bg-gray-800 text-gray-400'
+          }`}
+        >
+          Gigs ({gigs.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('demands')}
+          className={`flex-1 py-2 text-sm rounded-r-md ${
+            activeTab === 'demands' 
+              ? 'bg-yellow-500/20 text-white font-medium' 
+              : 'bg-gray-800 text-gray-400'
+          }`}
+        >
+          Demands ({demands.length})
+        </button>
+      </div>
+      
+      <div className="p-4 md:p-6 max-w-[1600px] mx-auto">
+        {/* Desktop View - 2 columns */}
+        <div className="hidden md:grid md:grid-cols-2 gap-6">
           {/* Gigs Column */}
           <div className="bg-[#181818] rounded-lg p-4 border border-gray-800">
             <div className="flex items-center gap-2 mb-4">
@@ -312,6 +405,7 @@ export default function Home() {
                 <GigCard
                   key={gig.id}
                   gig={gig}
+                  onContactClick={handleContactClick}
                 />
               ))}
             </div>
@@ -328,10 +422,48 @@ export default function Home() {
                 <DemandCard
                   key={demand.id}
                   demand={demand}
+                  onContactClick={handleContactClick}
                 />
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Mobile View - Single column with toggle */}
+        <div className="md:hidden">
+          {activeTab === 'gigs' && (
+            <div className="bg-[#181818] rounded-lg p-4 border border-gray-800">
+              <div className="space-y-3">
+                {gigs.map((gig) => (
+                  <GigCard
+                    key={gig.id}
+                    gig={gig}
+                    onContactClick={handleContactClick}
+                  />
+                ))}
+                {gigs.length === 0 && (
+                  <p className="text-gray-400 text-center py-4">No gigs available</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'demands' && (
+            <div className="bg-[#181818] rounded-lg p-4 border border-gray-800">
+              <div className="space-y-3">
+                {demands.map((demand) => (
+                  <DemandCard
+                    key={demand.id}
+                    demand={demand}
+                    onContactClick={handleContactClick}
+                  />
+                ))}
+                {demands.length === 0 && (
+                  <p className="text-gray-400 text-center py-4">No demands available</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -367,6 +499,30 @@ export default function Home() {
           />
         </Modal>
       )}
+
+      {/* Messages Panel */}
+      {user && (
+        <>
+          {!isMessagesOpen && <FloatingMessagesButton />}
+          <MessagesPanel
+            isOpen={isMessagesOpen}
+            onToggle={toggleMessages}
+            currentUser={user}
+            onSelectConversation={handleSelectConversation}
+            minimized={isMessagesPanelMinimized}
+            onMinimize={toggleMinimizeMessages}
+          />
+        </>
+      )}
+
+      {/* Chat Box */}
+      <ChatBox
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        currentUser={user}
+        recipientId={chatRecipientId}
+        recipientName={chatRecipientName}
+      />
     </div>
   );
 }

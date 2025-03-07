@@ -1,4 +1,6 @@
-export default function DemandCard({ demand }) {
+import { ChatBubbleOvalLeftIcon } from '@heroicons/react/24/outline';
+
+export default function DemandCard({ demand, onContactClick }) {
   return (
     <div className="bg-[#222222] rounded-lg p-4 border-l-4 border-yellow-500">
       <div className="flex justify-between items-start">
@@ -9,7 +11,7 @@ export default function DemandCard({ demand }) {
           
           {/* Display profile info if available */}
           {demand.profile && (
-            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-700">
+            <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-gray-700">
               <div className="flex items-center">
                 {demand.profile?.avatar_url && (
                   <img 
@@ -29,11 +31,21 @@ export default function DemandCard({ demand }) {
                   )}
                 </div>
               </div>
+              
+              <div className="flex items-center space-x-3">
+                <p className="text-green-400 text-xs font-medium">{demand.match_percentage || "0"}% Match</p>
+                
+                {/* Contact Button */}
+                <button 
+                  onClick={() => onContactClick(demand.user_id, demand.profile.full_name)}
+                  className="text-indigo-400 hover:text-indigo-300 transition-colors flex items-center space-x-1 text-xs"
+                >
+                  <ChatBubbleOvalLeftIcon className="w-4 h-4" />
+                  <span>Contact</span>
+                </button>
+              </div>
             </div>
           )}
-        </div>
-        <div className="text-right">
-          <p className="text-green-400 text-xs font-medium">{demand.match_percentage || "0"}% Match</p>
         </div>
       </div>
     </div>
