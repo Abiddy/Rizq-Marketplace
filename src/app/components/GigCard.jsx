@@ -4,7 +4,7 @@ import { ShareIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/2
 import { useState } from 'react';
 import Link from 'next/link';
 
-export default function GigCard({ gig, onContactClick }) {
+export default function GigCard({ gig, onContactClick, size = "normal" }) {
   const router = useRouter();
   const [showShareOptions, setShowShareOptions] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -57,11 +57,21 @@ export default function GigCard({ gig, onContactClick }) {
     onContactClick(gig.user_id, gig.profile?.full_name || 'User');
   };
 
+  // Determine classes based on size
+  const cardClasses = size === "small" 
+    ? "bg-[#1E1E1E] rounded-lg overflow-hidden border border-gray-800 h-full flex flex-col"
+    : "bg-[#1E1E1E] rounded-lg overflow-hidden border border-gray-800 h-full flex flex-col";
+  
+  const titleClasses = size === "small"
+    ? "text-base font-medium text-white line-clamp-1"
+    : "text-lg font-medium text-white";
+    
+  const descriptionClasses = size === "small"
+    ? "text-sm text-gray-400 line-clamp-2 mt-1"
+    : "text-gray-400 line-clamp-3 mt-2";
+
   return (
-    <div 
-      className="bg-[#1e1e1e] rounded-lg overflow-hidden border border-gray-800 hover:border-gray-700 transition-colors cursor-pointer w-full h-full"
-      onClick={handleCardClick}
-    >
+    <div className={cardClasses} onClick={handleCardClick}>
       {/* Image Carousel */}
       <div className="relative aspect-[4/3] bg-[#121212] overflow-hidden">
         {hasImages ? (
@@ -122,10 +132,9 @@ export default function GigCard({ gig, onContactClick }) {
         </div>
       </div>
       
-      <div className="p-2">
-        <h3 className="text-sm font-semibold text-white mb-1 line-clamp-1">{gig.title}</h3>
-        
-        <p className="text-xs text-gray-400 mb-2 line-clamp-1">{gig.description}</p>
+      <div className="p-4 flex-grow">
+        <h3 className={titleClasses}>{gig.title}</h3>
+        <p className={descriptionClasses}>{gig.description}</p>
         
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-1">
@@ -167,6 +176,11 @@ export default function GigCard({ gig, onContactClick }) {
             <ShareIcon className="w-3 h-3" />
           </button>
         </div>
+      </div>
+      
+      {/* Card footer */}
+      <div className="p-4 border-t border-gray-800 bg-[#181818]">
+        {/* Footer content... */}
       </div>
     </div>
   );

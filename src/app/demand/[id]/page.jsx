@@ -113,7 +113,6 @@ export default function DemandDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#121212]">
-        <Navbar user={user} />
         <div className="flex items-center justify-center h-[calc(100vh-64px)]">
           <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
@@ -124,7 +123,6 @@ export default function DemandDetailPage() {
   if (error || !demand) {
     return (
       <div className="min-h-screen bg-[#121212]">
-        <Navbar user={user} />
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="bg-red-900/20 border border-red-800 text-red-200 p-4 rounded-lg">
             {error || "Demand not found"}
@@ -142,7 +140,6 @@ export default function DemandDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#121212]">
-      <Navbar user={user} />
       
       <div className="max-w-4xl mx-auto px-4 py-6">
         <button 

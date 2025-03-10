@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import GigCard from './components/GigCard';
 import DemandCard from './components/DemandCard';
-import Navbar from './components/Navbar';
 import SearchBar from './components/SearchBar';
 import Modal from './components/Modal';
 import ProfileForm from './components/ProfileForm';
@@ -276,14 +275,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#121212]">
-      <Navbar 
-        user={user}
-        onLogOut={logOut}
-        onProfile={() => setShowProfileForm(true)}
-        onMessages={handleMessages}
-        onToggleMessages={handleToggleMessages}
-      />
-      
       {/* Add SearchBar here with top margin - just for gigs */}
       <div className="mt-8 mb-6">
         <SearchBar />

@@ -145,18 +145,36 @@ function GigsWithSearch() {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Your existing UI */}
-      {filteredGigs.map((gig) => (
-        <GigCard
-          key={gig.id}
-          gig={gig}
-          onContactClick={handleContactClick}
-        />
-      ))}
-      {filteredGigs.length === 0 && !loading && (
-        <p className="text-center text-gray-400 py-8">No gigs found</p>
-      )}
+    <div>
+      {/* Filter/category UI can remain unchanged */}
+      
+      {/* Update the grid layout for gigs */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredGigs.map((gig) => (
+          <div key={gig.id} className="transform transition hover:scale-[1.02]">
+            <GigCard
+              key={gig.id}
+              gig={gig}
+              onContactClick={handleContactClick}
+              size="small" // Add a size prop to make cards smaller
+            />
+          </div>
+        ))}
+        
+        {filteredGigs.length === 0 && !loading && (
+          <div className="col-span-full text-center py-8">
+            <p className="text-gray-400">No gigs found</p>
+            {isSearching && (
+              <button 
+                onClick={() => handleSearch('')}
+                className="mt-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-md text-white transition-colors"
+              >
+                Clear Search
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -165,7 +183,6 @@ function GigsWithSearch() {
 export default function GigsCenter() {
   return (
     <div className="min-h-screen bg-[#121212]">
-      <Navbar />
       
       <div className="mt-8 mb-6">
         <SearchBar />
@@ -189,8 +206,6 @@ export default function GigsCenter() {
           </Suspense>
         </div>
       </div>
-      
-      <Footer />
     </div>
   );
 } 

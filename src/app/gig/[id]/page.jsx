@@ -91,7 +91,6 @@ export default function GigDetail() {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
-      <Navbar user={user} />
       
       <main className="flex-grow container mx-auto px-4 py-8">
         {loading ? (
@@ -226,8 +225,6 @@ export default function GigDetail() {
           </div>
         )}
       </main>
-      
-      <Footer />
       
       <ChatBox
         isOpen={isChatOpen}

@@ -38,6 +38,9 @@ export default function ProfilePage() {
   const [showMessages, setShowMessages] = useState(false);
   const [activeChatUser, setActiveChatUser] = useState(null);
   const [activeChatUserName, setActiveChatUserName] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [deleteType, setDeleteType] = useState('');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -133,30 +136,46 @@ export default function ProfilePage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteGig = async (gigId) => {
+  const confirmDelete = (id, type) => {
+    setItemToDelete(id);
+    setDeleteType(type);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteGig = async () => {
+    if (!itemToDelete) return;
+    
     try {
       const { error } = await supabase
         .from('gigs')
         .delete()
-        .eq('id', gigId);
+        .eq('id', itemToDelete);
 
       if (error) throw error;
-      setUserGigs(userGigs.filter(gig => gig.id !== gigId));
+      
+      setUserGigs(userGigs.filter(gig => gig.id !== itemToDelete));
+      setShowDeleteConfirm(false);
+      setItemToDelete(null);
     } catch (err) {
       console.error('Error deleting gig:', err);
       setError('Failed to delete gig');
     }
   };
 
-  const handleDeleteDemand = async (demandId) => {
+  const handleDeleteDemand = async () => {
+    if (!itemToDelete) return;
+    
     try {
       const { error } = await supabase
         .from('demands')
         .delete()
-        .eq('id', demandId);
+        .eq('id', itemToDelete);
 
       if (error) throw error;
-      setUserDemands(userDemands.filter(demand => demand.id !== demandId));
+      
+      setUserDemands(userDemands.filter(demand => demand.id !== itemToDelete));
+      setShowDeleteConfirm(false);
+      setItemToDelete(null);
     } catch (err) {
       console.error('Error deleting demand:', err);
       setError('Failed to delete demand');
@@ -242,17 +261,6 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#121212]">
-      <Navbar 
-        user={user}
-        onPostGig={() => router.push('/new-gig')}
-        onPostDemand={() => router.push('/new-demand')}
-        onProfile={() => {}}
-        onLogOut={handleLogOut}
-        onMessages={() => {
-          setActiveChatUser(null); // Reset to show the messages list
-          setShowMessages(true);
-        }}
-      />
       
       <div className="p-4 max-w-[1200px] mx-auto">
         {error && (
@@ -383,218 +391,203 @@ export default function ProfilePage() {
           </div>
         </div>
         
-        {/* Contact Me Card */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-6 mb-6 shadow-xl">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-white">Contact Me</h2>
-            <ChatBubbleLeftRightIcon className="h-6 w-6 text-white" />
-          </div>
-          <p className="text-blue-100 mb-6">
-            Have a project in mind? Let's discuss how I can help you bring your ideas to life!
-          </p>
-          <button 
-            onClick={() => {
-              // Handle message sending logic here
-              if (user) {
-                setChatRecipientId(userProfile?.id);
-                setChatRecipientName(userProfile?.full_name || 'User');
-                setIsChatOpen(true);
-              } else {
-                setError('Please log in to send messages');
-              }
-            }}
-            className="w-full bg-white text-blue-700 py-3 rounded-md font-medium hover:bg-blue-50 transition-colors"
-          >
-            Send Message
-          </button>
-        </div>
-        
-        {/* Tabs for My Gigs and My Demands */}
-        <div className="sm:hidden sticky top-0 z-10 mb-3">
-          <div className="bg-[#181818] p-1.5 flex border border-gray-800 rounded-lg shadow-lg">
-            <button
-              onClick={() => setActiveTab('gigs')}
-              className={`flex-1 py-2 text-xs font-medium rounded-md flex items-center justify-center gap-1 ${
-                activeTab === 'gigs' 
-                  ? 'bg-orange-500/30 text-white' 
-                  : 'bg-gray-800/80 text-gray-400'
-              }`}
-            >
-              <BriefcaseIcon className="h-4 w-4" />
-              <span>My Gigs ({userGigs.length})</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('demands')}
-              className={`flex-1 py-2 text-xs font-medium rounded-md ml-1 flex items-center justify-center gap-1 ${
-                activeTab === 'demands' 
-                  ? 'bg-yellow-500/30 text-white' 
-                  : 'bg-gray-800/80 text-gray-400'
-              }`}
-            >
-              <DocumentTextIcon className="h-4 w-4" />
-              <span>My Demands ({userDemands.length})</span>
-            </button>
-          </div>
-        </div>
-        
-        {/* Desktop Content */}
-        <div className="hidden sm:block space-y-6">
-          {/* My Gigs Section */}
-          <div className="bg-[#222222] rounded-lg p-6 border border-gray-800">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-              <h2 className="text-lg font-medium text-white">My Gigs ({userGigs.length})</h2>
+        {/* Desktop View - Side by side layout */}
+        <div className="hidden md:flex space-x-6 mb-6">
+          {/* Gigs Column */}
+          <div className="w-1/2 bg-[#222222] rounded-lg p-6 border border-gray-800">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-white flex items-center">
+                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                Your Gigs
+              </h2>
+              <button 
+                onClick={() => router.push('/new-gig')}
+                className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded transition-colors"
+              >
+                + New Gig
+              </button>
             </div>
             
             <div className="space-y-4">
-              {userGigs.map(gig => (
-                <div key={gig.id} className="bg-[#222222] rounded-lg p-4 border-l-4 border-orange-500">
-                  <h3 className="font-semibold text-white">{gig.title}</h3>
-                  <p className="text-sm text-gray-400 mt-1">{gig.description}</p>
-                  <p className="text-white font-medium mt-2">${gig.budget}</p>
-                  
-                  <div className="flex justify-end mt-3 gap-2">
-                    <button
-                      onClick={() => handleEditGig(gig)}
-                      className="px-3 py-1 text-xs bg-gray-700 text-white rounded hover:bg-gray-600 flex items-center gap-1"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                      </svg>
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteGig(gig.id)}
-                      className="px-3 py-1 text-xs bg-red-700 text-white rounded hover:bg-red-600 flex items-center gap-1"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-              
-              {userGigs.length === 0 && (
+              {userGigs.length === 0 ? (
                 <p className="text-gray-400 text-center py-4">You haven't posted any gigs yet.</p>
+              ) : (
+                userGigs.map(gig => (
+                  <div key={gig.id} className="bg-[#1E1E1E] rounded-lg p-4 border border-gray-800">
+                    <h3 className="font-medium text-white mb-1">{gig.title}</h3>
+                    <p className="text-sm text-gray-400 mb-3 line-clamp-2">{gig.description}</p>
+                    <div className="flex justify-between items-center">
+                      <span className="text-green-400 font-medium">${gig.budget}</span>
+                      <div className="flex space-x-2">
+                        <button 
+                          onClick={() => handleEditGig(gig)}
+                          className="text-xs bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => confirmDelete(gig.id, 'gig')}
+                          className="text-xs bg-red-900 hover:bg-red-800 text-white px-2 py-1 rounded"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           </div>
           
-          {/* My Demands Section */}
-          <div className="bg-[#222222] rounded-lg p-6 border border-gray-800">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-              <h2 className="text-lg font-medium text-white">My Demands ({userDemands.length})</h2>
+          {/* Demands Column */}
+          <div className="w-1/2 bg-[#222222] rounded-lg p-6 border border-gray-800">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-white flex items-center">
+                <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                Your Demands
+              </h2>
+              <button 
+                onClick={() => router.push('/new-demand')}
+                className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded transition-colors"
+              >
+                + New Demand
+              </button>
             </div>
             
             <div className="space-y-4">
-              {userDemands.map(demand => (
-                <div key={demand.id} className="bg-[#222222] rounded-lg p-4 border-l-4 border-yellow-500">
-                  <h3 className="font-semibold text-white">{demand.title}</h3>
-                  <p className="text-sm text-gray-400 mt-1">{demand.description}</p>
-                  <p className="text-green-400 font-medium mt-2">{demand.budget}</p>
-                  
-                  <div className="flex justify-end mt-4 gap-2">
-                    <button
-                      onClick={() => handleEditDemand(demand)}
-                      className="px-3 py-1 text-xs bg-gray-700 text-white rounded hover:bg-gray-600"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteDemand(demand.id)}
-                      className="px-3 py-1 text-xs bg-red-700 text-white rounded hover:bg-red-600"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-              
-              {userDemands.length === 0 && (
+              {userDemands.length === 0 ? (
                 <p className="text-gray-400 text-center py-4">You haven't posted any demands yet.</p>
+              ) : (
+                userDemands.map(demand => (
+                  <div key={demand.id} className="bg-[#1E1E1E] rounded-lg p-4 border border-gray-800">
+                    <h3 className="font-medium text-white mb-1">{demand.title}</h3>
+                    <p className="text-sm text-gray-400 mb-3 line-clamp-2">{demand.description}</p>
+                    <div className="flex justify-between items-center">
+                      <span className="text-yellow-400 font-medium">${demand.budget}</span>
+                      <div className="flex space-x-2">
+                        <button 
+                          onClick={() => handleEditDemand(demand)}
+                          className="text-xs bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => confirmDelete(demand.id, 'demand')}
+                          className="text-xs bg-red-900 hover:bg-red-800 text-white px-2 py-1 rounded"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           </div>
         </div>
         
-        {/* Mobile View - based on selected tab */}
-        <div className="sm:hidden">
+        {/* Mobile View - Tabs */}
+        <div className="md:hidden">
+          <div className="flex mb-4">
+            <button
+              onClick={() => setActiveTab('gigs')}
+              className={`flex-1 py-2 text-center ${
+                activeTab === 'gigs' 
+                  ? 'bg-[#222222] text-white border-t-2 border-green-500' 
+                  : 'bg-[#1A1A1A] text-gray-400'
+              }`}
+            >
+              Your Gigs
+            </button>
+            <button
+              onClick={() => setActiveTab('demands')}
+              className={`flex-1 py-2 text-center ${
+                activeTab === 'demands' 
+                  ? 'bg-[#222222] text-white border-t-2 border-yellow-500' 
+                  : 'bg-[#1A1A1A] text-gray-400'
+              }`}
+            >
+              Your Demands
+            </button>
+          </div>
+          
           {activeTab === 'gigs' && (
-            <div className="space-y-3">
-              {userGigs.map(gig => (
-                <div key={gig.id} className="bg-[#222222] rounded-lg p-3 border-l-4 border-orange-500">
-                  <h3 className="font-semibold text-white text-sm">{gig.title}</h3>
-                  <p className="text-xs text-gray-400 mt-1 line-clamp-2">{gig.description}</p>
-                  <p className="text-white font-medium mt-2 text-sm">${gig.budget}</p>
-                  
-                  <div className="flex justify-end mt-3 gap-2">
-                    <button
-                      onClick={() => handleEditGig(gig)}
-                      className="px-3 py-1 text-xs bg-gray-700 text-white rounded hover:bg-gray-600 flex items-center gap-1"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                      </svg>
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteGig(gig.id)}
-                      className="px-3 py-1 text-xs bg-red-700 text-white rounded hover:bg-red-600 flex items-center gap-1"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div className="bg-[#222222] rounded-lg p-4 border border-gray-800">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-white">Your Gigs</h2>
+                <button 
+                  onClick={() => router.push('/new-gig')}
+                  className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded transition-colors"
+                >
+                  + New Gig
+                </button>
+              </div>
               
-              {userGigs.length === 0 && (
-                <div className="bg-[#222222] rounded-lg p-4 text-center">
-                  <p className="text-gray-400 text-sm py-4">You haven't posted any gigs yet.</p>
-                </div>
-              )}
+              <div className="space-y-3">
+                {userGigs.map(gig => (
+                  <div key={gig.id} className="bg-[#1E1E1E] rounded-lg p-4 border border-gray-800">
+                    <h3 className="font-medium text-white mb-1">{gig.title}</h3>
+                    <p className="text-sm text-gray-400 mb-3 line-clamp-2">{gig.description}</p>
+                    <div className="flex justify-between items-center">
+                      <span className="text-green-400 font-medium">${gig.budget}</span>
+                      <div className="flex space-x-2">
+                        <button 
+                          onClick={() => handleEditGig(gig)}
+                          className="text-xs bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => confirmDelete(gig.id, 'gig')}
+                          className="text-xs bg-red-900 hover:bg-red-800 text-white px-2 py-1 rounded"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
           
           {activeTab === 'demands' && (
-            <div className="space-y-3">
-              {userDemands.map(demand => (
-                <div key={demand.id} className="bg-[#222222] rounded-lg p-3 border-l-4 border-yellow-500">
-                  <h3 className="font-semibold text-white text-sm">{demand.title}</h3>
-                  <p className="text-xs text-gray-400 mt-1 line-clamp-2">{demand.description}</p>
-                  <p className="text-white font-medium mt-2 text-sm">{demand.budget}</p>
-                  
-                  <div className="flex justify-end mt-3 gap-2">
-                    <button
-                      onClick={() => handleEditDemand(demand)}
-                      className="px-3 py-1 text-xs bg-gray-700 text-white rounded hover:bg-gray-600 flex items-center gap-1"
-                    >
-                      <PencilIcon className="h-3 w-3" />
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteDemand(demand.id)}
-                      className="px-3 py-1 text-xs bg-red-700 text-white rounded hover:bg-red-600 flex items-center gap-1"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div className="bg-[#222222] rounded-lg p-4 border border-gray-800">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-white">Your Demands</h2>
+                <button 
+                  onClick={() => router.push('/new-demand')}
+                  className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded transition-colors"
+                >
+                  + New Demand
+                </button>
+              </div>
               
-              {userDemands.length === 0 && (
-                <div className="bg-[#222222] rounded-lg p-4 text-center">
-                  <p className="text-gray-400 text-sm py-4">You haven't posted any demands yet.</p>
-                </div>
-              )}
+              <div className="space-y-3">
+                {userDemands.map(demand => (
+                  <div key={demand.id} className="bg-[#1E1E1E] rounded-lg p-4 border border-gray-800">
+                    <h3 className="font-medium text-white mb-1">{demand.title}</h3>
+                    <p className="text-sm text-gray-400 mb-3 line-clamp-2">{demand.description}</p>
+                    <div className="flex justify-between items-center">
+                      <span className="text-yellow-400 font-medium">${demand.budget}</span>
+                      <div className="flex space-x-2">
+                        <button 
+                          onClick={() => handleEditDemand(demand)}
+                          className="text-xs bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => confirmDelete(demand.id, 'demand')}
+                          className="text-xs bg-red-900 hover:bg-red-800 text-white px-2 py-1 rounded"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -663,6 +656,32 @@ export default function ProfilePage() {
             />
           )}
         </Modal>
+      )}
+      
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#222222] rounded-lg p-6 max-w-md w-full border border-gray-800">
+            <h3 className="text-xl font-semibold text-white mb-4">Confirm Delete</h3>
+            <p className="text-gray-300 mb-6">
+              Are you sure you want to delete this {deleteType}? This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteType === 'gig' ? handleDeleteGig : handleDeleteDemand}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -3,7 +3,6 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import DemandCard from '../components/DemandCardCompact';
 import { useSearchParams } from 'next/navigation';
@@ -232,8 +231,6 @@ function DemandsContent() {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
-      <Navbar user={user} />
-      
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Demands Center</h1>
@@ -363,8 +360,6 @@ function DemandsContent() {
           </>
         )}
       </main>
-      
-      <Footer />
     </div>
   );
 }

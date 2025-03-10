@@ -105,7 +105,6 @@ export default function NewDemandPage() {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
-      <Navbar user={user} />
       
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto bg-[#181818] rounded-lg p-6 border border-gray-800">
@@ -199,8 +198,7 @@ export default function NewDemandPage() {
           </form>
         </div>
       </main>
-      
-      <Footer />
+  
     </div>
   );
 } 

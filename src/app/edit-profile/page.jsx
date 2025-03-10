@@ -171,7 +171,6 @@ export default function EditProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#121212] text-white">
-        <Navbar user={user} />
         <div className="flex items-center justify-center h-[calc(100vh-64px)]">
           <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
@@ -181,7 +180,6 @@ export default function EditProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#121212]">
-      <Navbar user={user} />
       
       <div className="max-w-3xl mx-auto px-4 py-10">
         <div className="mb-6 flex items-center justify-between">

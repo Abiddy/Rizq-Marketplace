@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Footer from './components/Footer';
+import { AuthProvider } from './context/AuthContext';
+import NavbarWrapper from './components/NavbarWrapper';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -19,7 +21,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
       <body className={`${inter.className} bg-black min-h-screen flex flex-col`}>
-        {children}
+        <AuthProvider>
+          <NavbarWrapper />
+          {children}
+        </AuthProvider>
         <Footer />
       </body>
     </html>

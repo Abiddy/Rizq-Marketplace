@@ -287,8 +287,11 @@ export default function Navbar({ onPostGig, onPostDemand, onLogOut, user, onProf
       <div className="max-w-[95%] mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0">
-            <Link href="/" className="text-2xl font-bold text-white flex items-center">
+            <Link href="/" className="text-2xl font-bold text-white flex items-center gap-2">
               Rizq
+              <span className="text-xs bg-green-500/30 text-green-300 px-2 py-0.5 rounded-full">
+                BETA
+              </span>
             </Link>
           </div>
 

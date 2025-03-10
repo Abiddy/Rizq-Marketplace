@@ -49,18 +49,15 @@ export default function NewGig() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col">
-        <Navbar />
         <div className="flex-grow flex items-center justify-center">
           <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
-      <Navbar user={user} />
       
       <main className="flex-grow flex items-center justify-center p-4 py-8">
         <GigForm 
@@ -69,8 +66,6 @@ export default function NewGig() {
           user={user}
         />
       </main>
-      
-      <Footer />
     </div>
   );
 } 
