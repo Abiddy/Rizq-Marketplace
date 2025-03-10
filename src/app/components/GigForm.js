@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import { XMarkIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import Image from 'next/image';
 
 export default function GigForm({ onSubmit, onCancel, initialData, user }) {
   const [title, setTitle] = useState('');
@@ -73,7 +74,7 @@ export default function GigForm({ onSubmit, onCancel, initialData, user }) {
       setUploadProgress(prev => ({ ...prev, [id]: 0 }));
       
       try {
-        const { data, error } = await supabase.storage
+        const { error } = await supabase.storage
           .from('gigs')
           .upload(filePath, file, {
             cacheControl: '3600',
@@ -206,11 +207,17 @@ export default function GigForm({ onSubmit, onCancel, initialData, user }) {
             {previewImages.map((image, index) => (
               <div key={index} className="relative group">
                 <div className="bg-[#121936] rounded-lg overflow-hidden aspect-video">
-                  <img 
-                    src={image.url} 
-                    alt={`Preview ${index}`} 
-                    className="w-full h-full object-cover"
-                  />
+                  {previewImages[index].url && (
+                    <div className="mt-2">
+                      <Image 
+                        src={previewImages[index].url} 
+                        alt={`Preview ${index}`} 
+                        width={200} 
+                        height={200} 
+                        className="rounded-md object-cover"
+                      />
+                    </div>
+                  )}
                   {!image.uploaded && uploadProgress[image.id] !== undefined && uploadProgress[image.id] < 100 && (
                     <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
                       <div className="w-full max-w-[80%] bg-gray-700 rounded-full h-2.5">

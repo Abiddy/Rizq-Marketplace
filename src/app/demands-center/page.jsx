@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import Navbar from '../components/Navbar';
@@ -8,8 +8,9 @@ import Footer from '../components/Footer';
 import DemandCard from '../components/DemandCardCompact';
 import { useSearchParams } from 'next/navigation';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import SearchBar from '../components/SearchBar';
 
-export default function DemandsCenter() {
+function DemandsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState(null);
@@ -197,6 +198,38 @@ export default function DemandsCenter() {
     router.replace(url.pathname + url.search);
   };
 
+  // Function to handle search
+  const handleSearch = (query) => {
+    // Create a new URLSearchParams object
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (query) {
+      params.set('search', query);
+    } else {
+      params.delete('search');
+    }
+    
+    // Update the URL with the new search parameter
+    router.push(`/demands-center?${params.toString()}`);
+    
+    // Update local state
+    setSearchQuery(query);
+    setIsSearching(!!query);
+    
+    // Filter demands based on search query
+    if (query) {
+      const filtered = demands.filter(demand => 
+        demand.title.toLowerCase().includes(query.toLowerCase()) ||
+        demand.description.toLowerCase().includes(query.toLowerCase())
+      );
+      setSearchResults(filtered);
+    } else {
+      setSearchResults([]);
+      // Reset to showing all demands by category
+      fetchDemands();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
       <Navbar user={user} />
@@ -212,84 +245,51 @@ export default function DemandsCenter() {
           </button>
         </div>
         
-        {/* Search bar */}
-        <form onSubmit={performSearch} className="mb-6">
-          <div className="flex items-center bg-[#181818] border border-gray-700 rounded-lg overflow-hidden">
-            <input
-              type="text"
-              placeholder="Search for demands, projects, budgets..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="w-full py-3 px-4 bg-transparent text-white focus:outline-none placeholder-gray-500"
-            />
-            <button 
-              type="submit"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 flex items-center transition-colors"
-            >
-              <MagnifyingGlassIcon className="w-5 h-5" />
-              <span className="ml-2 font-medium hidden sm:inline">Search</span>
-            </button>
-          </div>
-        </form>
-        
-        {/* Search results indicator */}
-        {isSearching && (
-          <div className="mb-4 flex items-center justify-between bg-gray-800 p-3 rounded-md">
-            <div>
-              <span className="text-gray-300">Search results for: </span>
-              <span className="font-medium text-white">{searchQuery}</span>
-              <span className="ml-2 text-gray-400">({searchResults.length} results)</span>
-            </div>
-            <button 
-              onClick={clearSearch}
-              className="text-gray-300 hover:text-white transition-colors"
-            >
-              Clear
-            </button>
-          </div>
-        )}
-        
-        {/* Category selector */}
-        {!isSearching && (
-          <div className="mb-8 overflow-x-auto">
-            <div className="flex space-x-2 pb-2">
-              <button
-                onClick={() => handleCategoryChange('all')}
-                className={`px-4 py-2 rounded-md text-sm whitespace-nowrap ${
-                  activeCategory === 'all' 
-                    ? 'bg-indigo-600 text-white' 
-                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                }`}
+        <div className="mb-6">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            handleSearch(searchQuery);
+          }}>
+            <div className="flex items-center bg-[#181818] border border-gray-700 rounded-lg overflow-hidden">
+              <input
+                type="text"
+                placeholder="Search for demands, projects, budgets..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full py-3 px-4 bg-transparent text-white focus:outline-none placeholder-gray-500"
+              />
+              <button 
+                type="submit"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 flex items-center transition-colors"
               >
-                All Categories
+                <MagnifyingGlassIcon className="w-5 h-5" />
+                <span className="ml-2 font-medium hidden sm:inline">Search</span>
               </button>
-              
-              {Object.keys(categories).filter(cat => cat !== 'all').map(category => (
-                <button
-                  key={category}
-                  onClick={() => handleCategoryChange(category)}
-                  className={`px-4 py-2 rounded-md text-sm whitespace-nowrap ${
-                    activeCategory === category 
-                      ? 'bg-indigo-600 text-white' 
-                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
             </div>
-          </div>
-        )}
+          </form>
+        </div>
         
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : (
-          <>
-            {/* Demands grid */}
+        {/* Display search results or categorized demands */}
+        {isSearching ? (
+          <div>
+            {/* Search results indicator */}
+            <div className="mb-4 flex items-center justify-between bg-gray-800 p-3 rounded-md">
+              <div>
+                <span className="text-gray-300">Search results for: </span>
+                <span className="font-medium text-white">{searchQuery}</span>
+                <span className="ml-2 text-gray-400">({searchResults.length} results)</span>
+              </div>
+              <button 
+                onClick={clearSearch}
+                className="text-gray-300 hover:text-white transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+            
+            {/* Search results grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {(categories[activeCategory] || []).map(demand => (
+              {searchResults.map(demand => (
                 <DemandCard
                   key={demand.id}
                   demand={demand}
@@ -297,17 +297,84 @@ export default function DemandsCenter() {
                 />
               ))}
               
-              {(categories[activeCategory] || []).length === 0 && (
+              {searchResults.length === 0 && (
                 <div className="col-span-3 text-center py-12 text-gray-400">
-                  No demands found in this category.
+                  No demands found matching "{searchQuery}".
                 </div>
               )}
             </div>
+          </div>
+        ) : (
+          <>
+            {/* Category selector */}
+            <div className="mb-8 overflow-x-auto">
+              <div className="flex space-x-2 pb-2">
+                <button
+                  onClick={() => handleCategoryChange('all')}
+                  className={`px-4 py-2 rounded-md text-sm whitespace-nowrap ${
+                    activeCategory === 'all' 
+                      ? 'bg-indigo-600 text-white' 
+                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  }`}
+                >
+                  All Categories
+                </button>
+                
+                {Object.keys(categories).filter(cat => cat !== 'all').map(category => (
+                  <button
+                    key={category}
+                    onClick={() => handleCategoryChange(category)}
+                    className={`px-4 py-2 rounded-md text-sm whitespace-nowrap ${
+                      activeCategory === category 
+                        ? 'bg-indigo-600 text-white' 
+                        : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <>
+                {/* Demands grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {(categories[activeCategory] || []).map(demand => (
+                    <DemandCard
+                      key={demand.id}
+                      demand={demand}
+                      onContactClick={() => handleContactClick(demand.user_id, demand.profile?.full_name || 'User')}
+                    />
+                  ))}
+                  
+                  {(categories[activeCategory] || []).length === 0 && (
+                    <div className="col-span-3 text-center py-12 text-gray-400">
+                      No demands found in this category.
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </>
         )}
       </main>
       
       <Footer />
+    </div>
+  );
+}
+
+export default function DemandsCenterPage() {
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <Suspense fallback={<div>Loading demands...</div>}>
+        <DemandsContent />
+      </Suspense>
     </div>
   );
 } 
