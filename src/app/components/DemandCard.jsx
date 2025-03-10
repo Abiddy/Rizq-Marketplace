@@ -1,51 +1,117 @@
 import { ChatBubbleOvalLeftIcon } from '@heroicons/react/24/solid';
+import { useRouter } from 'next/navigation';
+import { ShareIcon } from '@heroicons/react/24/solid';
+import { useState } from 'react';
 
 export default function DemandCard({ demand, onContactClick }) {
+  const router = useRouter();
+  const [showShareOptions, setShowShareOptions] = useState(false);
+
+  const handleClick = () => {
+    router.push(`/demand/${demand.id}`);
+  };
+
+  const handleShare = async (e, platform) => {
+    e.stopPropagation(); // Prevent card click
+    
+    const url = `${window.location.origin}/demand/${demand.id}`;
+    const title = demand.title || 'Check out this project';
+    
+    switch (platform) {
+      case 'copy':
+        try {
+          await navigator.clipboard.writeText(url);
+          alert('Link copied to clipboard!');
+        } catch (err) {
+          console.error('Failed to copy:', err);
+        }
+        break;
+      case 'twitter':
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank');
+        break;
+      case 'facebook':
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+        break;
+      case 'linkedin':
+        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
+        break;
+      case 'whatsapp':
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(title + ' ' + url)}`, '_blank');
+        break;
+    }
+    
+    setShowShareOptions(false);
+  };
+
+  const toggleShareOptions = (e) => {
+    e.stopPropagation();
+    setShowShareOptions(!showShareOptions);
+  };
+
   return (
-    <div className="bg-[#222222] rounded-lg p-4 border-l-4 border-yellow-500">
-      <div className="flex justify-between items-start">
-        <div className="flex-1">
-          <h3 className="font-semibold text-base text-white">{demand.title}</h3>
-          <p className="text-green-400 text-sm mt-1">{demand.budget || "300"}</p>
-          <p className="text-gray-400 text-sm mt-1">{demand.location || "sa,mds,"}</p>
-          
-          {/* Display profile info if available */}
-          {demand.profile && (
-            <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-gray-700">
-              <div className="flex items-center">
-                {demand.profile?.avatar_url && (
-                  <img 
-                    src={demand.profile.avatar_url} 
-                    alt={demand.profile.full_name || 'User'}
-                    className="w-6 h-6 rounded-full mr-2"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23666' d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
-                    }}
-                  />
-                )}
-                <div>
-                  <p className="text-gray-300 text-xs">{demand.profile.full_name}</p>
-                  {demand.profile.company_name && (
-                    <p className="text-gray-500 text-xs">{demand.profile.company_name}</p>
-                  )}
+    <div 
+      className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-gray-800 cursor-pointer hover:border-gray-600 transition-colors"
+      onClick={handleClick}
+    >
+      <div className="border-l-4 border-yellow-500 p-4">
+        <div className="flex justify-between items-start">
+          <h3 className="text-lg font-semibold text-white">{demand.title}</h3>
+          <div className="relative">
+            <button 
+              onClick={toggleShareOptions}
+              className="p-1.5 rounded-full hover:bg-gray-700 text-gray-400"
+            >
+              <ShareIcon className="w-4 h-4" />
+            </button>
+            
+            {showShareOptions && (
+              <div className="absolute right-0 mt-2 w-40 bg-[#252525] rounded-md shadow-lg z-10 border border-gray-700">
+                <div className="py-1">
+                  <button onClick={(e) => handleShare(e, 'copy')} className="w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700">
+                    Copy Link
+                  </button>
+                  <button onClick={(e) => handleShare(e, 'twitter')} className="w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700">
+                    Share on Twitter
+                  </button>
+                  <button onClick={(e) => handleShare(e, 'facebook')} className="w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700">
+                    Share on Facebook
+                  </button>
+                  <button onClick={(e) => handleShare(e, 'linkedin')} className="w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700">
+                    Share on LinkedIn
+                  </button>
+                  <button onClick={(e) => handleShare(e, 'whatsapp')} className="w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700">
+                    Share on WhatsApp
+                  </button>
                 </div>
               </div>
-              
-              <div className="flex items-center space-x-3">
-                <p className="text-green-400 text-xs font-medium">{demand.match_percentage || "0"}% Match</p>
-                
-                {/* Contact Button */}
-                <button 
-                  onClick={() => onContactClick(demand.user_id, demand.profile.full_name)}
-                  className="text-indigo-400 hover:text-indigo-300 transition-colors flex items-center space-x-1 text-xs"
-                >
-                  <ChatBubbleOvalLeftIcon className="w-4 h-4" />
-                  <span>Contact</span>
-                </button>
+            )}
+          </div>
+        </div>
+        <p className="text-gray-400 mt-2 text-sm line-clamp-2">{demand.description}</p>
+      </div>
+      
+      <div className="p-4 pt-0">
+        <div className="mt-2 flex justify-between items-center">
+          <div className="text-white font-bold">${demand.budget}</div>
+          <div className="text-sm text-gray-400">
+            {demand.category}
+          </div>
+        </div>
+        
+        <div className="mt-3 flex items-center border-t border-gray-800 pt-3">
+          <div className="flex-shrink-0 w-8 h-8 bg-gray-700 rounded-full overflow-hidden">
+            {demand.user_avatar ? (
+              <img src={demand.user_avatar} alt={demand.user_name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                {(demand.user_name || 'User').charAt(0).toUpperCase()}
               </div>
-            </div>
-          )}
+            )}
+          </div>
+          <div className="ml-2 flex-1 min-w-0">
+            <p className="text-sm text-white truncate">{demand.user_name || 'Anonymous'}</p>
+            <p className="text-xs text-gray-500 truncate">{demand.user_title || ''}</p>
+          </div>
         </div>
       </div>
     </div>

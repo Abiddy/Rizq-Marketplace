@@ -14,3 +14,22 @@ body {
 .modal-overlay {
   @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
 }
+
+/* Add these at the end of your globals.css file */
+@media (max-width: 640px) {
+  html, body {
+    overflow: auto;
+    width: 100%;
+    background-color: #111111;
+  }
+  
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+/* Add or modify these styles */
+.fixed {
+  position: fixed !important;
+}

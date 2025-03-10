@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { useRouter } from 'next/navigation';
 import GigForm from './components/GigForm';
 import Modal from './components/Modal';
 import DemandCard from './components/DemandCard';
@@ -13,8 +14,12 @@ import ProfileForm from './components/ProfileForm';
 import ChatBox from './components/ChatBox';
 import MessagesPanel from './components/MessagesPanel';
 import { ChatBubbleOvalLeftIcon } from '@heroicons/react/24/solid';
+import ProfilePrompt from './components/ProfilePrompt';
+import Link from 'next/link';
+import SearchBar from './components/SearchBar';
 
 export default function Home() {
+  const router = useRouter();
   const [gigs, setGigs] = useState([]);
   const [demands, setDemands] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -29,7 +34,7 @@ export default function Home() {
   const [userProfile, setUserProfile] = useState(null);
   const [hasProfileInfo, setHasProfileInfo] = useState(false);
   
-  // New state for mobile toggle
+  // New state for mobile
   const [activeTab, setActiveTab] = useState('gigs');
 
   // Add these state variables in the Home component
@@ -41,11 +46,34 @@ export default function Home() {
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
   const [isMessagesPanelMinimized, setIsMessagesPanelMinimized] = useState(false);
 
+  // Add state for profile prompt
+  const [showProfilePrompt, setShowProfilePrompt] = useState(false);
+
+  // Add loading state
+  const [loading, setLoading] = useState(true);
+
   // Fetch both gigs and demands
   useEffect(() => {
-    fetchGigs();
-    fetchDemands();
-    fetchProfiles();
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setUser(data.session?.user || null);
+      
+      if (data.session?.user) {
+        // Check if profile is complete
+        checkProfileCompleteness(data.session.user.id);
+      }
+      
+      setLoading(false);
+    };
+    
+    const fetchListings = async () => {
+      fetchGigs();
+      fetchDemands();
+      fetchProfiles();
+    };
+    
+    checkAuth();
+    fetchListings();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth state changed:', event, session);
@@ -57,8 +85,34 @@ export default function Home() {
       }
     });
 
-    return () => authListener.subscription.unsubscribe();
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
+
+  const checkProfileCompleteness = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, username, avatar_url')
+        .eq('id', userId)
+        .single();
+      
+      if (error) throw error;
+      
+      // Check if essential profile fields are missing
+      const isProfileIncomplete = !data || 
+        !data.full_name || 
+        !data.username;
+      
+      if (isProfileIncomplete) {
+        // Redirect directly to edit profile instead of showing a modal
+        router.push('/edit-profile');
+      }
+    } catch (error) {
+      console.error('Error checking profile:', error);
+    }
+  };
 
   const fetchGigs = async () => {
     try {
@@ -140,84 +194,6 @@ export default function Home() {
     setHasProfileInfo(data && data.full_name);
   };
 
-  const addGig = async (newGig) => {
-    if (!user) {
-      setError('Please log in to create a gig.');
-      return;
-    }
-    const gigWithUser = { ...newGig, user_id: user.id };
-    const { data, error } = await supabase.from('gigs').insert(gigWithUser).select();
-    if (error) console.error('Error adding gig:', error);
-    else setGigs((prev) => [...prev, data[0]]);
-  };
-
-  const updateGig = async (updatedGig) => {
-    if (!user) {
-      setError('Please log in to edit a gig.');
-      return;
-    }
-    const { data, error } = await supabase
-      .from('gigs')
-      .update(updatedGig)
-      .eq('id', updatedGig.id)
-      .select();
-    if (error) console.error('Error updating gig:', error);
-    else {
-      setGigs((prev) =>
-        prev.map((gig) => (gig.id === updatedGig.id ? data[0] : gig))
-      );
-    }
-  };
-
-  const deleteGig = async (gigId) => {
-    if (!user) {
-      setError('Please log in to delete a gig.');
-      return;
-    }
-    const { error } = await supabase.from('gigs').delete().eq('id', gigId);
-    if (error) console.error('Error deleting gig:', error);
-    else setGigs((prev) => prev.filter((gig) => gig.id !== gigId));
-  };
-
-  const addDemand = async (newDemand) => {
-    if (!user) {
-      setError('Please log in to create a demand.');
-      return;
-    }
-    const demandWithUser = { ...newDemand, user_id: user.id };
-    const { data, error } = await supabase.from('demands').insert(demandWithUser).select();
-    if (error) console.error('Error adding demand:', error);
-    else setDemands((prev) => [...prev, data[0]]);
-  };
-
-  const updateDemand = async (updatedDemand) => {
-    if (!user) {
-      setError('Please log in to edit a demand.');
-      return;
-    }
-    const { data, error } = await supabase
-      .from('demands')
-      .update(updatedDemand)
-      .eq('id', updatedDemand.id)
-      .select();
-    if (error) console.error('Error updating demand:', error);
-    else {
-      setDemands((prev) =>
-        prev.map((demand) => (demand.id === updatedDemand.id ? data[0] : demand))
-      );
-    }
-  };
-
-  const deleteDemand = async (demandId) => {
-    if (!user) {
-      setError('Please log in to delete a demand.');
-      return;
-    }
-    const { error } = await supabase.from('demands').delete().eq('id', demandId);
-    if (error) console.error('Error deleting demand:', error);
-    else setDemands((prev) => prev.filter((demand) => demand.id !== demandId));
-  };
-
   const signUp = async () => {
     try {
       console.log('Attempting to sign up with:', { email, password });
@@ -268,32 +244,6 @@ export default function Home() {
       setDemands([]);
       setError(null);
     }
-  };
-
-  const openEditModal = (gig) => {
-    if (!user) {
-      setError('Please log in to edit a gig.');
-      return;
-    }
-    setGigToEdit(gig);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setGigToEdit(null);
-    setDemandToEdit(null);
-    setIsModalOpen(false);
-  };
-
-  const handleCreatePostClick = (isGig) => {
-    if (!hasProfileInfo) {
-      setError('Please complete your profile before posting');
-      setShowProfileForm(true);
-      return;
-    }
-    
-    setIsGigForm(isGig);
-    setIsModalOpen(true);
   };
 
   // Add this function to handle opening the chat
@@ -348,6 +298,17 @@ export default function Home() {
     </button>
   );
 
+  const handleMessages = (userId, userName) => {
+    setChatRecipientId(userId);
+    setChatRecipientName(userName);
+  };
+
+  const handleToggleMessages = (userId, userName) => {
+    setChatRecipientId(userId);
+    setChatRecipientName(userName);
+    setIsChatOpen(true);
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500/5 to-purple-500/5">
@@ -360,12 +321,16 @@ export default function Home() {
     <div className="min-h-screen bg-[#121212]">
       <Navbar 
         user={user}
-        onPostGig={() => handleCreatePostClick(true)}
-        onPostDemand={() => handleCreatePostClick(false)}
-        onProfile={() => setShowProfileForm(true)}
         onLogOut={logOut}
-        onToggleMessages={toggleMessages}
+        onProfile={() => setShowProfileForm(true)}
+        onMessages={handleMessages}
+        onToggleMessages={handleToggleMessages}
       />
+      
+      {/* Add SearchBar here with top margin - just for gigs */}
+      <div className="mt-8 mb-6">
+        <SearchBar />
+      </div>
       
       {/* Mobile Toggle */}
       <div className="md:hidden bg-[#181818] p-2 flex border-b border-gray-800">
@@ -396,26 +361,44 @@ export default function Home() {
         <div className="hidden md:grid md:grid-cols-2 gap-6">
           {/* Gigs Column */}
           <div className="bg-[#181818] rounded-lg p-4 border border-gray-800">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-              <h2 className="text-sm font-medium text-white">Gigs ({gigs.length})</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium text-white flex items-center">
+                <span className="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                Gigs ({gigs.length})
+              </h2>
+              <Link 
+                href="/gigs-center" 
+                className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+              >
+                View All Gigs
+              </Link>
             </div>
-            <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               {gigs.map((gig) => (
-                <GigCard
-                  key={gig.id}
-                  gig={gig}
-                  onContactClick={handleContactClick}
-                />
+                <div key={gig.id} className="transform transition hover:scale-[1.02]">
+                  <GigCard
+                    gig={gig}
+                    onContactClick={handleContactClick}
+                    size="small"
+                  />
+                </div>
               ))}
             </div>
           </div>
 
           {/* Demands Column */}
           <div className="bg-[#181818] rounded-lg p-4 border border-gray-800">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-              <h2 className="text-sm font-medium text-white">Demands ({demands.length})</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium text-white flex items-center">
+                <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                Demands ({demands.length})
+              </h2>
+              <Link 
+                href="/demands-center" 
+                className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+              >
+                View All Demands
+              </Link>
             </div>
             <div className="space-y-3">
               {demands.map((demand) => (
@@ -467,24 +450,6 @@ export default function Home() {
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={closeModal}>
-        {isGigForm ? (
-          <GigForm
-            onAddGig={addGig}
-            onUpdateGig={updateGig}
-            onClose={closeModal}
-            gigToEdit={gigToEdit}
-          />
-        ) : (
-          <DemandForm
-            onAddDemand={addDemand}
-            onUpdateDemand={updateDemand}
-            onClose={closeModal}
-            demandToEdit={demandToEdit}
-          />
-        )}
-      </Modal>
-
       {showProfileForm && (
         <Modal isOpen={showProfileForm} onClose={() => setShowProfileForm(false)}>
           <ProfileForm 
@@ -500,22 +465,19 @@ export default function Home() {
         </Modal>
       )}
 
-      {/* Messages Panel */}
-      {user && (
-        <>
-          {!isMessagesOpen && <FloatingMessagesButton />}
-          <MessagesPanel
-            isOpen={isMessagesOpen}
-            onToggle={toggleMessages}
-            currentUser={user}
-            onSelectConversation={handleSelectConversation}
-            minimized={isMessagesPanelMinimized}
-            onMinimize={toggleMinimizeMessages}
+      {showProfilePrompt && (
+        <Modal isOpen={showProfilePrompt} onClose={() => setShowProfilePrompt(false)}>
+          <ProfilePrompt 
+            onComplete={() => {
+              setShowProfilePrompt(false);
+              setShowProfileForm(true);
+            }}
+            onCancel={() => setShowProfilePrompt(false)}
           />
-        </>
+        </Modal>
       )}
 
-      {/* Chat Box */}
+      Chat Box
       <ChatBox
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
