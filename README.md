@@ -1,6 +1,9 @@
-# Rizq Marketplace
+# Fullstack Freelancing Platform Built with NextJs and Supabase
 
-<img width="1436" alt="Screenshot 2025-03-05 at 1 37 08 PM" src="https://github.com/user-attachments/assets/6dc87363-3737-400e-a29f-e33e20248ebc" />
+## [Live Website Link](https://next-js-freelancing-marketplace.vercel.app/)
+
+<img width="1440" alt="Screenshot 2025-03-10 at 6 24 47 PM" src="https://github.com/user-attachments/assets/448a3974-c724-45c8-b0fe-c565c1410a93" />
+
 
 A modern freelance marketplace platform connecting skilled professionals with clients seeking services. Built with Next.js, React, and Supabase.
 
