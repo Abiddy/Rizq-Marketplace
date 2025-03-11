@@ -226,16 +226,16 @@ export default function Home() {
     }
   };
 
-  const logOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) console.error('Log Out error:', error);
-    else {
-      setUser(null);
-      setGigs([]);
-      setDemands([]);
-      setError(null);
-    }
-  };
+  // const logOut = async () => {
+  //   const { error } = await supabase.auth.signOut();
+  //   if (error) console.error('Log Out error:', error);
+  //   else {
+  //     setUser(null);
+  //     setGigs([]);
+  //     setDemands([]);
+  //     setError(null);
+  //   }
+  // };
 
   const handleContactClick = (userId: string, userName: string) => {
     if (!user) {
@@ -254,16 +254,16 @@ export default function Home() {
     setIsChatOpen(true);
   };
 
-  const handleMessages = (userId: string, userName: string) => {
-    setChatRecipientId(userId);
-    setChatRecipientName(userName);
-  };
+  // const handleMessages = (userId: string, userName: string) => {
+  //   setChatRecipientId(userId);
+  //   setChatRecipientName(userName);
+  // };
 
-  const handleToggleMessages = (userId: string, userName: string) => {
-    setChatRecipientId(userId);
-    setChatRecipientName(userName);
-    setIsChatOpen(true);
-  };
+  // const handleToggleMessages = (userId: string, userName: string) => {
+  //   setChatRecipientId(userId);
+  //   setChatRecipientName(userName);
+  //   setIsChatOpen(true);
+  // };
 
   if (!user) {
     return (
