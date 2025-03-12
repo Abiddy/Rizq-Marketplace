@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { XMarkIcon, PaperAirplaneIcon } from '@heroicons/react/24/solid';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/app/context/AuthContext';
 
-export default function ChatBox({ isOpen, onClose, currentUser, recipientId, recipientName }) {
+export default function ChatBox({ isOpen, onClose, recipientId, recipientName }) {
+  const { user: currentUser } = useAuth();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -48,6 +50,9 @@ export default function ChatBox({ isOpen, onClose, currentUser, recipientId, rec
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Don't render if no current user or recipient
+  if (!currentUser || !recipientId) return null;
 
   const fetchMessages = async () => {
     setIsLoading(true);

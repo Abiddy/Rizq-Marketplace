@@ -9,10 +9,10 @@ import SearchBar from './components/SearchBar';
 import Modal from './components/Modal';
 import ProfileForm from './components/ProfileForm';
 import ProfilePrompt from './components/ProfilePrompt';
-import ChatBox from './components/ChatBox';
 import Link from 'next/link';
 import AuthForm from './components/AuthForm';
 import { User } from '@supabase/supabase-js';
+import { useChat } from './context/ChatContext';
 
 // Add type definitions for your Gig and Demand objects
 type Profile = {
@@ -79,9 +79,7 @@ export default function Home() {
   const [error, setError] = useState<ErrorMessage>(null);
   
   // Chat-related state
-  const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
-  const [chatRecipientId, setChatRecipientId] = useState<ChatRecipient>(null);
-  const [chatRecipientName, setChatRecipientName] = useState<string>('');
+  const { openChat } = useChat();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -226,45 +224,6 @@ export default function Home() {
     }
   };
 
-  // const logOut = async () => {
-  //   const { error } = await supabase.auth.signOut();
-  //   if (error) console.error('Log Out error:', error);
-  //   else {
-  //     setUser(null);
-  //     setGigs([]);
-  //     setDemands([]);
-  //     setError(null);
-  //   }
-  // };
-
-  const handleContactClick = (userId: string, userName: string) => {
-    if (!user) {
-      setError('Please log in to contact users');
-      return;
-    }
-    
-    // Don't allow chatting with yourself
-    if (userId === user.id) {
-      setError('You cannot message yourself');
-      return;
-    }
-    
-    setChatRecipientId(userId);
-    setChatRecipientName(userName);
-    setIsChatOpen(true);
-  };
-
-  // const handleMessages = (userId: string, userName: string) => {
-  //   setChatRecipientId(userId);
-  //   setChatRecipientName(userName);
-  // };
-
-  // const handleToggleMessages = (userId: string, userName: string) => {
-  //   setChatRecipientId(userId);
-  //   setChatRecipientName(userName);
-  //   setIsChatOpen(true);
-  // };
-
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500/5 to-purple-500/5">
@@ -326,8 +285,6 @@ export default function Home() {
                 <div key={gig.id} className="transform transition hover:scale-[1.02]">
                   <GigCard
                     gig={gig}
-                    onContactClick={handleContactClick}
-                    size="small"
                   />
                 </div>
               ))}
@@ -353,7 +310,6 @@ export default function Home() {
                 <DemandCard
                   key={demand.id}
                   demand={demand}
-                  onContactClick={handleContactClick}
                 />
               ))}
             </div>
@@ -369,7 +325,6 @@ export default function Home() {
                   <GigCard
                     key={gig.id}
                     gig={gig}
-                    onContactClick={handleContactClick}
                   />
                 ))}
                 {gigs.length === 0 && (
@@ -386,7 +341,6 @@ export default function Home() {
                   <DemandCard
                     key={demand.id}
                     demand={demand}
-                    onContactClick={handleContactClick}
                   />
                 ))}
                 {demands.length === 0 && (
@@ -424,15 +378,6 @@ export default function Home() {
           />
         </Modal>
       )}
-
-      Chat Box
-      <ChatBox
-        isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
-        currentUser={user}
-        recipientId={chatRecipientId}
-        recipientName={chatRecipientName}
-      />
     </div>
   );
 }

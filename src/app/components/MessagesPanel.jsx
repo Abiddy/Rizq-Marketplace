@@ -228,7 +228,10 @@ export default function MessagesPanel({
                         className={`hover:bg-gray-800/40 cursor-pointer ${
                           conversation.unreadCount > 0 ? 'bg-gray-800/20' : ''
                         }`}
-                        onClick={() => onSelectConversation(conversation.user.id, conversation.user.full_name)}
+                        onClick={() => {
+                          onSelectConversation(conversation.user.id, conversation.user.full_name);
+                          onToggle();
+                        }}
                       >
                         <div className="flex items-center p-3">
                           <div className="relative flex-shrink-0">

@@ -3,9 +3,13 @@ import { useRouter } from 'next/navigation';
 import { ShareIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import Link from 'next/link';
+import { useChat } from '@/app/context/ChatContext';
+import { useAuth } from '@/app/context/AuthContext';
 
-export default function GigCard({ gig, onContactClick, size = "normal" }) {
+export default function GigCard({ gig, size = "normal" }) {
   const router = useRouter();
+  const { openChat } = useChat();
+  const { user } = useAuth();
   const [showShareOptions, setShowShareOptions] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
@@ -54,7 +58,20 @@ export default function GigCard({ gig, onContactClick, size = "normal" }) {
 
   const handleContactClick = (e) => {
     e.stopPropagation(); // Prevent card navigation
-    onContactClick(gig.user_id, gig.profile?.full_name || 'User');
+    
+    // If user is not logged in, redirect to auth page
+    if (!user) {
+      router.push('/auth');
+      return;
+    }
+    
+    // Don't allow messaging yourself
+    if (gig.user_id === user.id) {
+      alert("You cannot message yourself");
+      return;
+    }
+    
+    openChat(gig.user_id, gig.profile?.full_name || 'User');
   };
 
   // Determine classes based on size

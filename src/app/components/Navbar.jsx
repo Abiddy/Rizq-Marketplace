@@ -5,7 +5,7 @@ import { UserCircleIcon, ChevronDownIcon as ChevDownIcon, XMarkIcon } from '@her
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 
-export default function Navbar({ onPostGig, onPostDemand, onLogOut, user, onProfile, onMessages, onToggleMessages }) {
+export default function Navbar({ onPostGig, onPostDemand, onLogOut, user, userProfile, onProfile, onMessages, onToggleMessages }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -249,23 +249,9 @@ export default function Navbar({ onPostGig, onPostDemand, onLogOut, user, onProf
   };
 
   // Handle selecting a conversation
-  const handleSelectConversation = async (userId, userName) => {
+  const handleSelectConversation = (userId, userName) => {
     // Close the messages panel
-    setIsMessagesOpen(false);
-    
-    // Mark messages as read
-    try {
-      const { error } = await supabase
-        .from('messages')
-        .update({ is_read: true })
-        .eq('sender_id', userId)
-        .eq('recipient_id', user.id)
-        .eq('is_read', false);
-        
-      if (error) console.error('Error marking messages as read:', error);
-    } catch (err) {
-      console.error('Error updating read status:', err);
-    }
+    toggleMessages();
     
     // Update unread count
     fetchUnreadCount();
@@ -275,9 +261,8 @@ export default function Navbar({ onPostGig, onPostDemand, onLogOut, user, onProf
       onMessages(userId, userName);
     }
     
-    // If onToggleMessages exists, call it to open the chat box at the bottom
+    // If onToggleMessages exists, call it to open the chat box
     if (onToggleMessages) {
-      // First param is recipient ID, second is recipient name
       onToggleMessages(userId, userName);
     }
   };
@@ -330,26 +315,21 @@ export default function Navbar({ onPostGig, onPostDemand, onLogOut, user, onProf
                 <div className="relative" ref={profileDropdownRef}>
                   <button 
                     onClick={toggleProfileDropdown}
-                    className="flex items-center text-sm font-medium text-white rounded-full focus:outline-none"
+                    className="flex items-center focus:outline-none"
                   >
-                    <span className="hidden md:block mr-2">{user.email}</span>
-                    {user.user_metadata?.avatar_url ? (
-                      <img 
-                        src={user.user_metadata.avatar_url} 
-                        alt="Profile" 
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                    ) : user.avatar_url ? (
-                      <img 
-                        src={user.avatar_url} 
-                        alt="Profile" 
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white">
-                        {user.email ? user.email.charAt(0).toUpperCase() : 'U'}
-                      </div>
-                    )}
+                    <div className="h-8 w-8 rounded-full overflow-hidden border border-gray-600">
+                      {userProfile?.avatar_url ? (
+                        <img 
+                          src={userProfile.avatar_url} 
+                          alt={userProfile?.full_name || user?.email} 
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-gray-700 flex items-center justify-center">
+                          <UserCircleIcon className="h-6 w-6 text-gray-300" />
+                        </div>
+                      )}
+                    </div>
                     <ChevDownIcon className="ml-1 h-4 w-4 text-gray-400" />
                   </button>
                   

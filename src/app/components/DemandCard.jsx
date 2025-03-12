@@ -2,9 +2,13 @@ import { ChatBubbleOvalLeftIcon } from '@heroicons/react/24/solid';
 import { useRouter } from 'next/navigation';
 import { ShareIcon } from '@heroicons/react/24/solid';
 import { useState } from 'react';
+import { useChat } from '@/app/context/ChatContext';
+import { useAuth } from '@/app/context/AuthContext';
 
-export default function DemandCard({ demand, onContactClick }) {
+export default function DemandCard({ demand }) {
   const router = useRouter();
+  const { openChat } = useChat();
+  const { user } = useAuth();
   const [showShareOptions, setShowShareOptions] = useState(false);
 
   const handleClick = () => {
@@ -46,6 +50,22 @@ export default function DemandCard({ demand, onContactClick }) {
   const toggleShareOptions = (e) => {
     e.stopPropagation();
     setShowShareOptions(!showShareOptions);
+  };
+
+  const handleContactClick = (e) => {
+    e.stopPropagation();
+    
+    if (!user) {
+      router.push('/auth');
+      return;
+    }
+    
+    if (demand.user_id === user.id) {
+      alert("You cannot message yourself");
+      return;
+    }
+    
+    openChat(demand.user_id, demand.user_name || 'User');
   };
 
   return (
