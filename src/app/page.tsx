@@ -12,7 +12,6 @@ import ProfilePrompt from './components/ProfilePrompt';
 import Link from 'next/link';
 import AuthForm from './components/AuthForm';
 import { User } from '@supabase/supabase-js';
-import { useChat } from './context/ChatContext';
 
 // Add type definitions for your Gig and Demand objects
 type Profile = {
@@ -55,7 +54,7 @@ type Demand = {
 }
 
 // Add type for chat-related state
-type ChatRecipient = string | null;
+// type ChatRecipient = string | null;
 
 // Add a type for error messages
 type ErrorMessage = string | null;
@@ -79,7 +78,7 @@ export default function Home() {
   const [error, setError] = useState<ErrorMessage>(null);
   
   // Chat-related state
-  const { openChat } = useChat();
+  // const { openChat } = useChat();
 
   useEffect(() => {
     const checkAuth = async () => {
