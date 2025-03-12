@@ -120,17 +120,25 @@ export default function DemandCard({ demand }) {
         
         <div className="mt-3 flex items-center border-t border-gray-800 pt-3">
           <div className="flex-shrink-0 w-8 h-8 bg-gray-700 rounded-full overflow-hidden">
-            {demand.user_avatar ? (
-              <img src={demand.user_avatar} alt={demand.user_name} className="w-full h-full object-cover" />
+            {demand.profile?.avatar_url ? (
+              <img 
+                src={demand.profile.avatar_url} 
+                alt={demand.profile.full_name} 
+                className="w-full h-full object-cover" 
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
-                {(demand.user_name || 'User').charAt(0).toUpperCase()}
+                {demand.profile?.full_name?.charAt(0).toUpperCase() || 'U'}
               </div>
             )}
           </div>
           <div className="ml-2 flex-1 min-w-0">
-            <p className="text-sm text-white truncate">{demand.user_name || 'Anonymous'}</p>
-            <p className="text-xs text-gray-500 truncate">{demand.user_title || ''}</p>
+            <p className="text-sm text-white truncate">
+              {demand.profile?.full_name || 'Anonymous'}
+            </p>
+            <p className="text-xs text-gray-500 truncate">
+              {demand.profile?.company_name || ''}
+            </p>
           </div>
         </div>
       </div>

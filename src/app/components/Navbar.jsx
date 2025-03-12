@@ -45,6 +45,7 @@ export default function Navbar({ onPostGig, onPostDemand, onLogOut, user, userPr
     setIsMessagesOpen(!isMessagesOpen);
     if (!isMessagesOpen && user) {
       fetchConversations();
+      fetchUnreadCount();
     }
   };
 
@@ -53,6 +54,13 @@ export default function Navbar({ onPostGig, onPostDemand, onLogOut, user, userPr
     if (!user) return;
     
     fetchUnreadCount();
+    
+    // Listen for the custom event to refresh unread count
+    const handleRefreshCount = () => {
+      fetchUnreadCount();
+    };
+    
+    window.addEventListener('refreshUnreadCount', handleRefreshCount);
     
     // Subscribe to new messages for real-time updates
     const channel = supabase
@@ -65,9 +73,18 @@ export default function Navbar({ onPostGig, onPostDemand, onLogOut, user, userPr
       }, () => {
         fetchUnreadCount();
       })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'messages',
+        filter: `recipient_id=eq.${user.id}`,
+      }, () => {
+        fetchUnreadCount();
+      })
       .subscribe();
 
     return () => {
+      window.removeEventListener('refreshUnreadCount', handleRefreshCount);
       supabase.removeChannel(channel);
     };
   }, [user]);
@@ -76,15 +93,28 @@ export default function Navbar({ onPostGig, onPostDemand, onLogOut, user, userPr
     if (!user) return;
     
     try {
+      console.log("Fetching unread count...");
+      // Get all unread messages
       const { data, error } = await supabase
         .from('messages')
-        .select('id', { count: 'exact' })
+        .select('sender_id')
         .eq('recipient_id', user.id)
-        .eq('is_read', false);
+        .eq('read', false);
       
       if (error) throw error;
       
-      setUnreadCount(data?.length || 0);
+      // Count unique senders using JavaScript
+      const uniqueSenders = new Set();
+      if (data) {
+        data.forEach(message => {
+          uniqueSenders.add(message.sender_id);
+        });
+      }
+      
+      // Set unread count to number of unique conversations
+      const newCount = uniqueSenders.size;
+      console.log(`Unread conversations: ${newCount}`);
+      setUnreadCount(newCount);
     } catch (error) {
       console.error('Error fetching unread count:', error);
     }
@@ -249,12 +279,27 @@ export default function Navbar({ onPostGig, onPostDemand, onLogOut, user, userPr
   };
 
   // Handle selecting a conversation
-  const handleSelectConversation = (userId, userName) => {
+  const handleSelectConversation = async (userId, userName) => {
+    // Mark all messages from this sender as read before opening chat
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ read: true })
+        .eq('sender_id', userId)
+        .eq('recipient_id', user.id);
+        
+      if (error) {
+        console.error('Error marking messages as read:', error);
+      }
+      
+      // Refresh unread count immediately
+      fetchUnreadCount();
+    } catch (err) {
+      console.error('Error in marking messages as read:', err);
+    }
+    
     // Close the messages panel
     toggleMessages();
-    
-    // Update unread count
-    fetchUnreadCount();
     
     // Call the parent component's callback to open the individual chat
     if (onMessages) {

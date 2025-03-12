@@ -15,7 +15,14 @@ export default function ChatBox({ isOpen, onClose, recipientId, recipientName })
   useEffect(() => {
     if (isOpen && currentUser && recipientId) {
       fetchMessages();
+      
+      // Mark messages as read immediately when chat opens
       markMessagesAsRead();
+      
+      // Also periodically mark new incoming messages as read while chat is open
+      const readInterval = setInterval(() => {
+        markMessagesAsRead();
+      }, 3000);
       
       // Subscribe to new messages
       const channel = supabase
@@ -42,6 +49,7 @@ export default function ChatBox({ isOpen, onClose, recipientId, recipientName })
 
       return () => {
         supabase.removeChannel(channel);
+        clearInterval(readInterval); // Clean up interval
       };
     }
   }, [isOpen, currentUser, recipientId]);
@@ -91,8 +99,10 @@ export default function ChatBox({ isOpen, onClose, recipientId, recipientName })
   };
 
   const markMessagesAsRead = async () => {
+    if (!currentUser || !recipientId) return;
+    
     try {
-      const { error } = await supabase
+      const { error, count } = await supabase
         .from('messages')
         .update({ read: true })
         .eq('sender_id', recipientId)
@@ -100,6 +110,12 @@ export default function ChatBox({ isOpen, onClose, recipientId, recipientName })
         .eq('read', false);
       
       if (error) throw error;
+      
+      // If any messages were updated, trigger a refresh of the unread counter
+      if (count > 0) {
+        console.log(`Marked ${count} messages as read`);
+        window.dispatchEvent(new CustomEvent('refreshUnreadCount'));
+      }
     } catch (err) {
       console.error('Error marking messages as read:', err);
     }
@@ -109,18 +125,36 @@ export default function ChatBox({ isOpen, onClose, recipientId, recipientName })
     e.preventDefault();
     if (!newMessage.trim()) return;
 
+    const messageContent = newMessage.trim();
+    setNewMessage(''); // Clear input field immediately
+    
+    // Create message object
+    const newMessageObj = {
+      id: Date.now().toString(), // Temporary ID
+      sender_id: currentUser.id,
+      recipient_id: recipientId,
+      content: messageContent,
+      created_at: new Date().toISOString(),
+      read: false
+    };
+    
+    // Add message to UI immediately (optimistic update)
+    setMessages(prev => [...prev, newMessageObj]);
+    
+    // Then send to database
     try {
       const { error } = await supabase.from('messages').insert({
         sender_id: currentUser.id,
         recipient_id: recipientId,
-        content: newMessage.trim(),
+        content: messageContent,
       });
 
       if (error) throw error;
-
-      setNewMessage('');
+      
     } catch (error) {
       console.error('Error sending message:', error);
+      // If there was an error, you could remove the optimistic message
+      // or show an error indicator
     }
   };
 

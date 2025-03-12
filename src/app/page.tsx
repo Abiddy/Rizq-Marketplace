@@ -203,12 +203,16 @@ export default function Home() {
       // Fetch profiles separately if demands exist
       if (data && data.length > 0) {
         const userIds = [...new Set(data.map(demand => demand.user_id))];
-        const { data: profiles } = await supabase
+        const { data: profiles, error: profileError } = await supabase
           .from('profiles')
           .select('id, full_name, company_name, avatar_url')
           .in('id', userIds);
+        
+        if (profileError) {
+          console.error('Error fetching profiles for demands:', profileError);
+        }
 
-        // Attach profiles to demands with proper typing
+        // Attach profiles to demands
         const demandsWithProfiles = data.map(demand => ({
           ...demand,
           profile: profiles?.find(profile => profile.id === demand.user_id) || null

@@ -20,6 +20,8 @@ function DemandsContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   useEffect(() => {
     const checkAuth = async () => {
@@ -46,47 +48,45 @@ function DemandsContent() {
   }, [searchParams]);
   
   const fetchDemands = async () => {
+    setIsLoading(true);
     try {
-      setLoading(true);
-      
-      // Fetch all demands
-      const { data, error } = await supabase
+      let query = supabase
         .from('demands')
-        .select('*, user_id')
-        .order('created_at', { ascending: false });
+        .select('*, user_id');
+      
+      // Apply filters if needed...
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       
-      // Fetch profiles for the demands
-      const userIds = [...new Set(data.map(demand => demand.user_id))];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, username, company_name, avatar_url')
-        .in('id', userIds);
+      // Fetch profiles for each demand
+      if (data && data.length > 0) {
+        const userIds = [...new Set(data.map(demand => demand.user_id))];
+        const { data: profiles, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, full_name, company_name, avatar_url')
+          .in('id', userIds);
         
-      // Attach profile data to demands
-      const demandsWithProfiles = data.map(demand => ({
-        ...demand,
-        profile: profiles?.find(profile => profile.id === demand.user_id) || null
-      }));
-      
-      // Organize demands by category
-      const categorizedDemands = {};
-      categorizedDemands['all'] = demandsWithProfiles;
-      
-      demandsWithProfiles.forEach(demand => {
-        if (!categorizedDemands[demand.category]) {
-          categorizedDemands[demand.category] = [];
+        if (profileError) {
+          console.error('Error fetching profiles:', profileError);
         }
-        categorizedDemands[demand.category].push(demand);
-      });
-      
-      setDemands(demandsWithProfiles);
-      setCategories(categorizedDemands);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching demands:', error);
-      setLoading(false);
+        
+        // Combine demands with profiles
+        const demandsWithProfiles = data.map(demand => ({
+          ...demand,
+          profile: profiles?.find(profile => profile.id === demand.user_id) || null
+        }));
+        
+        setDemands(demandsWithProfiles);
+      } else {
+        setDemands([]);
+      }
+    } catch (err) {
+      console.error('Error fetching demands:', err);
+      setError('Failed to load demands. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
   
