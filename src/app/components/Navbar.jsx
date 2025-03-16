@@ -4,6 +4,7 @@ import { ChatBubbleOvalLeftIcon, EnvelopeIcon, ChevronUpIcon, ChevronDownIcon } 
 import { UserCircleIcon, ChevronDownIcon as ChevDownIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
+import LandingNavbar from './LandingNavbar';
 
 export default function Navbar({ onPostGig, onPostDemand, onLogOut, user, userProfile, onProfile, onMessages, onToggleMessages }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -309,6 +310,22 @@ export default function Navbar({ onPostGig, onPostDemand, onLogOut, user, userPr
     // If onToggleMessages exists, call it to open the chat box
     if (onToggleMessages) {
       onToggleMessages(userId, userName);
+    }
+  };
+
+  // If no user is logged in, show the simple landing navbar
+  if (!user) {
+    return <LandingNavbar onSignIn={handleNavSignIn} />;
+  }
+  
+  // Add this function to handle sign-in click from the landing navbar
+  const handleNavSignIn = () => {
+    // If onProfile exists as a prop, use it
+    if (onProfile) {
+      onProfile();
+    } else {
+      // Otherwise try to redirect
+      router.push('/login');
     }
   };
 

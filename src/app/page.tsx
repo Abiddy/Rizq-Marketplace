@@ -12,6 +12,7 @@ import ProfilePrompt from './components/ProfilePrompt';
 import Link from 'next/link';
 import AuthForm from './components/AuthForm';
 import { User } from '@supabase/supabase-js';
+import LandingPage from './components/LandingPage';
 
 // Add type definitions for your Gig and Demand objects
 type Profile = {
@@ -67,6 +68,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('gigs');
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [showProfilePrompt, setShowProfilePrompt] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
   
   // These variables are used in the component - let's keep them
   // but add "// eslint-disable-next-line" comments to suppress the warnings
@@ -228,11 +230,15 @@ export default function Home() {
   };
 
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500/5 to-purple-500/5">
-        <AuthForm />
-      </div>
-    );
+    if (showAuth) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500/5 to-purple-500/5">
+          <AuthForm onBack={() => setShowAuth(false)} />
+        </div>
+      );
+    }
+    
+    return <LandingPage onGetStarted={() => setShowAuth(true)} />;
   }
 
   return (
