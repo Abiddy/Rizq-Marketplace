@@ -5,6 +5,9 @@ import { UserCircleIcon, ChevronDownIcon as ChevDownIcon, XMarkIcon } from '@her
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import LandingNavbar from './LandingNavbar';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHandshake } from '@fortawesome/free-solid-svg-icons';
+
 
 export default function Navbar({ onPostGig, onPostDemand, onLogOut, user, userProfile, onProfile, onMessages, onToggleMessages }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -347,6 +350,13 @@ export default function Navbar({ onPostGig, onPostDemand, onLogOut, user, userPr
               <div className="flex items-center space-x-4">
                 <div className="hidden md:flex md:items-center md:space-x-2">
                   <Link 
+                    href="/deals"
+                    className="px-4 py-2 text-sm font-medium text-white bg-[#1e1e1e] hover:bg-[#2a2a2a] rounded-md transition-colors flex items-center"
+                  >
+                    {/* <HandshakeIcon className="h-4 w-4 mr-1.5" /> */}
+                    Active Deals
+                  </Link>
+                  <Link 
                     href="/new-gig"
                     className="px-4 py-2 text-sm font-medium text-white bg-[#1e1e1e] hover:bg-[#2a2a2a] rounded-md transition-colors"
                   >
@@ -399,6 +409,14 @@ export default function Navbar({ onPostGig, onPostDemand, onLogOut, user, userPr
                     <div className="absolute right-0 mt-2 w-48 bg-[#1A1A1A] rounded-md shadow-lg z-50 border border-gray-800">
                       <div className="py-1">
                         <div className="md:hidden">
+                          <Link 
+                            href="/deals"
+                            className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 flex items-center"
+                            onClick={() => setIsProfileDropdownOpen(false)}
+                          >
+                            {/* <HandshakeIcon className="h-4 w-4 mr-1.5" /> */}
+                            Active Deals
+                          </Link>
                           <Link 
                             href="/new-gig"
                             className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800"

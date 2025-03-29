@@ -5,13 +5,20 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useChat } from '@/app/context/ChatContext';
 import { useAuth } from '@/app/context/AuthContext';
+import DealModal from './DealModal';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHandshake } from '@fortawesome/free-solid-svg-icons';
 
-export default function GigCard({ gig, size = "normal" }) {
+export default function GigCard({ gig, size = "normal", userId }) {
   const router = useRouter();
   const { openChat } = useChat();
   const { user } = useAuth();
   const [showShareOptions, setShowShareOptions] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showDealModal, setShowDealModal] = useState(false);
+  
+  // Use the authenticated user ID if userId prop is not provided
+  const currentUserId = userId || user?.id;
   
   const hasImages = gig.images && gig.images.length > 0;
   
@@ -86,6 +93,9 @@ export default function GigCard({ gig, size = "normal" }) {
   const descriptionClasses = size === "small"
     ? "text-sm text-gray-400 line-clamp-2 mt-1"
     : "text-gray-400 line-clamp-3 mt-2";
+
+  // Don't show deal button on own gigs
+  const isOwnGig = gig.user_id === currentUserId;
 
   return (
     <div className={cardClasses} onClick={handleCardClick}>
@@ -197,8 +207,30 @@ export default function GigCard({ gig, size = "normal" }) {
       
       {/* Card footer */}
       <div className="p-4 border-t border-gray-800 bg-[#181818]">
-        {/* Footer content... */}
+        {/* Make a Deal button - only show for other users' gigs */}
+        {!isOwnGig && (
+          <div className="border-t border-gray-800 p-3">
+            <button 
+              onClick={() => setShowDealModal(true)}
+              className="w-full flex items-center justify-center py-1.5 text-sm bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded transition-colors"
+            >
+            <FontAwesomeIcon icon={faHandshake} />
+              Make a Deal
+            </button>
+          </div>
+        )}
       </div>
+      
+      {/* Deal Modal */}
+      {showDealModal && (
+        <DealModal
+          isOpen={showDealModal}
+          onClose={() => setShowDealModal(false)}
+          targetItem={gig}
+          targetType="gig"
+          userId={currentUserId}
+        />
+      )}
     </div>
   );
 } 
