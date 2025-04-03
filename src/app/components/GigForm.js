@@ -1,33 +1,76 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
-import { XMarkIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, PhotoIcon, PlusIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
+import { gigCategories } from '@/lib/categories';
 
 export default function GigForm({ onSubmit, onCancel, initialData, user }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
-  const [category, setCategory] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [customCategory, setCustomCategory] = useState('');
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
   const [uploadProgress, setUploadProgress] = useState({});
+  const MAX_CATEGORIES = 5;
+  const MAX_CUSTOM_CATEGORIES = 3;
 
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title || '');
       setDescription(initialData.description || '');
       setPrice(initialData.price || '');
-      setCategory(initialData.category || '');
+      setSelectedCategories(initialData.categories || []);
       
-      // Set initial images if editing a gig
       if (initialData.images && initialData.images.length > 0) {
         setImages(initialData.images);
         setPreviewImages(initialData.images.map(url => ({ url, uploaded: true })));
       }
     }
   }, [initialData]);
+
+  const handleCategoryToggle = (category) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(category)) {
+        return prev.filter(c => c !== category);
+      } else {
+        if (prev.length >= MAX_CATEGORIES) {
+          return prev;
+        }
+        return [...prev, category];
+      }
+    });
+  };
+
+  const handleAddCustomCategory = (e) => {
+    e.preventDefault();
+    if (!customCategory.trim()) return;
+    
+    const customCount = selectedCategories.filter(cat => 
+      !gigCategories.some(group => group.categories.includes(cat))
+    ).length;
+    
+    if (customCount >= MAX_CUSTOM_CATEGORIES) {
+      alert(`You can only add up to ${MAX_CUSTOM_CATEGORIES} custom categories`);
+      return;
+    }
+    
+    if (selectedCategories.length >= MAX_CATEGORIES) {
+      alert(`You can only select up to ${MAX_CATEGORIES} categories in total`);
+      return;
+    }
+    
+    if (selectedCategories.includes(customCategory.trim())) {
+      alert('This category already exists');
+      return;
+    }
+    
+    setSelectedCategories(prev => [...prev, customCategory.trim()]);
+    setCustomCategory('');
+  };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -110,12 +153,12 @@ export default function GigForm({ onSubmit, onCancel, initialData, user }) {
       // Upload images first
       const imageUrls = await uploadImages();
       
-      // Then submit the form with image URLs
+      // Submit the form with image URLs
       await onSubmit({
         title,
         description,
         price: parseFloat(price),
-        category,
+        categories: selectedCategories,
         images: imageUrls,
       });
       
@@ -123,7 +166,7 @@ export default function GigForm({ onSubmit, onCancel, initialData, user }) {
       setTitle('');
       setDescription('');
       setPrice('');
-      setCategory('');
+      setSelectedCategories([]);
       setImages([]);
       setPreviewImages([]);
     } catch (error) {
@@ -153,24 +196,104 @@ export default function GigForm({ onSubmit, onCancel, initialData, user }) {
         </div>
         
         <div className="mb-6">
-          <label className="block text-white mb-2">Category</label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full p-3 bg-[#121936] text-white border border-gray-700 rounded-lg focus:outline-none focus:border-indigo-500 appearance-none"
-            required
-          >
-            <option value="">Select a category</option>
-            <option value="Web Development">Web Development</option>
-            <option value="Mobile Development">Mobile Development</option>
-            <option value="Logo Design">Logo Design</option>
-            <option value="Graphic Design">Graphic Design</option>
-            <option value="Content Writing">Content Writing</option>
-            <option value="Translation">Translation</option>
-            <option value="Social Media">Social Media</option>
-            <option value="Marketing">Marketing</option>
-            <option value="Video Editing">Video Editing</option>
-          </select>
+          <div className="flex justify-between items-center mb-2">
+            <label className="block text-white">Categories (Select up to 5)</label>
+            <span className="text-sm text-gray-400">
+              {selectedCategories.length}/{MAX_CATEGORIES} selected
+            </span>
+          </div>
+
+          {/* Custom Category Input */}
+          <div className="mb-4">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={customCategory}
+                onChange={(e) => setCustomCategory(e.target.value)}
+                placeholder="Add a custom category"
+                className="flex-1 p-3 bg-[#121936] text-white border border-gray-700 rounded-lg focus:outline-none focus:border-indigo-500"
+                maxLength={30}
+              />
+              <button
+                type="button"
+                onClick={handleAddCustomCategory}
+                disabled={selectedCategories.length >= MAX_CATEGORIES}
+                className={`px-4 rounded-lg flex items-center justify-center ${
+                  selectedCategories.length >= MAX_CATEGORIES
+                    ? 'bg-gray-700 cursor-not-allowed'
+                    : 'bg-indigo-600 hover:bg-indigo-700'
+                }`}
+              >
+                <PlusIcon className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              You can add up to {MAX_CUSTOM_CATEGORIES} custom categories
+            </p>
+          </div>
+
+          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-4">
+            {/* Selected Categories */}
+            {selectedCategories.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {selectedCategories.map((category) => (
+                  <span
+                    key={category}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-600/20 border border-indigo-500 rounded-full text-sm text-white"
+                  >
+                    {category}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCategories(prev => prev.filter(c => c !== category))}
+                      className="p-0.5 hover:bg-indigo-500 rounded-full"
+                    >
+                      <XMarkIcon className="h-4 w-4" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Predefined Categories */}
+            {gigCategories.map((group) => (
+              <div key={group.heading} className="space-y-2">
+                <h3 className="text-gray-400 text-sm font-medium border-b border-gray-800 pb-1">
+                  {group.heading}
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {group.categories.map((category) => (
+                    <label
+                      key={category}
+                      className={`flex items-center p-2 rounded cursor-pointer transition-colors ${
+                        selectedCategories.includes(category)
+                          ? 'bg-indigo-600/20 border border-indigo-500'
+                          : selectedCategories.length >= MAX_CATEGORIES
+                          ? 'bg-gray-800/50 border border-gray-700 opacity-50 cursor-not-allowed'
+                          : 'bg-[#121936] border border-gray-700 hover:border-gray-600'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedCategories.includes(category)}
+                        onChange={() => handleCategoryToggle(category)}
+                        disabled={selectedCategories.length >= MAX_CATEGORIES && !selectedCategories.includes(category)}
+                        className="hidden"
+                      />
+                      <span className={`text-sm ${
+                        selectedCategories.length >= MAX_CATEGORIES && !selectedCategories.includes(category)
+                          ? 'text-gray-500'
+                          : 'text-white'
+                      }`}>{category}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {selectedCategories.length === 0 && (
+            <p className="text-red-500 text-sm mt-2">Please select at least one category</p>
+          )}
         </div>
 
         <div className="mb-6">

@@ -43,20 +43,40 @@ export default function GigCard({ gig, size = "normal", userId }) {
     setCurrentImageIndex((prev) => (prev - 1 + gig.images.length) % gig.images.length);
   };
   
-  const getCategoryColor = (category) => {
-    const colorMap = {
-      'Web Development': 'from-blue-500 to-blue-600',
-      'Mobile Development': 'from-purple-500 to-purple-600',
-      'Logo Design': 'from-orange-500 to-orange-600',
-      'Graphic Design': 'from-pink-500 to-pink-600',
-      'Content Writing': 'from-green-500 to-green-600',
-      'Translation': 'from-yellow-500 to-yellow-600',
-      'Social Media': 'from-red-500 to-red-600',
-      'Marketing': 'from-teal-500 to-teal-600',
-      'Video Editing': 'from-indigo-500 to-indigo-600'
-    };
+  const getRandomGradient = (() => {
+    // Professional color gradient combinations
+    const gradients = [
+      'from-blue-500 to-blue-600',
+      'from-indigo-500 to-indigo-600',
+      'from-purple-500 to-purple-600',
+      'from-emerald-500 to-emerald-600',
+      'from-cyan-500 to-cyan-600',
+      'from-teal-500 to-teal-600',
+      'from-violet-500 to-violet-600',
+      'from-fuchsia-500 to-fuchsia-600',
+      'from-rose-500 to-rose-600',
+      'from-orange-500 to-orange-600'
+    ];
     
-    return colorMap[category] || 'from-gray-500 to-gray-600';
+    // Cache to keep consistent colors for categories within a session
+    const categoryColors = new Map();
+    let currentIndex = 0;
+    
+    return (category) => {
+      if (!categoryColors.has(category)) {
+        categoryColors.set(category, gradients[currentIndex % gradients.length]);
+        currentIndex++;
+      }
+      return categoryColors.get(category);
+    };
+  })();
+  
+  // Function to format category display text
+  const formatCategoryText = (category) => {
+    if (category.startsWith('custom:')) {
+      return `#${category.replace('custom:', '')}`;
+    }
+    return category;
   };
   
   const formatPrice = (price) => {
@@ -96,6 +116,16 @@ export default function GigCard({ gig, size = "normal", userId }) {
 
   // Don't show deal button on own gigs
   const isOwnGig = gig.user_id === currentUserId;
+
+  // Safely parse categories once
+  const parsedCategories = (() => {
+    try {
+      return typeof gig.categories === 'string' ? JSON.parse(gig.categories) : (Array.isArray(gig.categories) ? gig.categories : []);
+    } catch (e) {
+      console.error('Error parsing categories:', e);
+      return [];
+    }
+  })();
 
   return (
     <div className={cardClasses} onClick={handleCardClick}>
@@ -151,11 +181,21 @@ export default function GigCard({ gig, size = "normal", userId }) {
           </div>
         )}
         
-        {/* Category Label */}
-        <div className="absolute top-3 left-3">
-          <span className={`text-xs font-semibold px-2 py-1 rounded-md bg-gradient-to-r ${getCategoryColor(gig.category)} text-white`}>
-            {gig.category}
-          </span>
+        {/* Categories Labels */}
+        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 max-w-[90%]">
+          {parsedCategories.slice(0, 2).map((category, index) => (
+            <span 
+              key={index}
+              className={`text-xs font-medium px-2.5 py-1 rounded-full bg-gradient-to-r ${getRandomGradient(category)} text-white shadow-md backdrop-blur-sm bg-opacity-90`}
+            >
+              {category}
+            </span>
+          ))}
+          {parsedCategories.length > 2 && (
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-black/50 text-white shadow-md backdrop-blur-sm border border-white/10">
+              +{parsedCategories.length - 2}
+            </span>
+          )}
         </div>
       </div>
       

@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
 import { ShareIcon, ChevronLeftIcon, ChevronRightIcon, ChatBubbleOvalLeftIcon } from '@heroicons/react/24/outline';
 import ChatBox from '@/app/components/ChatBox';
 
@@ -18,6 +16,7 @@ export default function GigDetail() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatRecipientId, setChatRecipientId] = useState(null);
   const [chatRecipientName, setChatRecipientName] = useState('');
+  const [showCopiedToast, setShowCopiedToast] = useState(false);
   
   useEffect(() => {
     const checkAuth = async () => {
@@ -29,6 +28,16 @@ export default function GigDetail() {
     fetchGig();
   }, [params.id]);
   
+  // Hide the copied toast after 2 seconds
+  useEffect(() => {
+    if (showCopiedToast) {
+      const timer = setTimeout(() => {
+        setShowCopiedToast(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showCopiedToast]);
+  
   const fetchGig = async () => {
     try {
       setLoading(true);
@@ -36,7 +45,7 @@ export default function GigDetail() {
       // Fetch the gig
       const { data: gig, error } = await supabase
         .from('gigs')
-        .select('*, user_id')
+        .select('*, categories, user_id')
         .eq('id', params.id)
         .single();
       
@@ -50,6 +59,8 @@ export default function GigDetail() {
         .single();
       
       if (profileError) console.error('Error fetching profile:', profileError);
+      
+      console.log('Fetched gig:', gig); // Add this for debugging
       
       setGig({
         ...gig,
@@ -89,8 +100,52 @@ export default function GigDetail() {
     setIsChatOpen(true);
   };
 
+  const handleShare = async () => {
+    try {
+      const url = window.location.href;
+      await navigator.clipboard.writeText(url);
+      setShowCopiedToast(true);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  const getRandomGradient = (() => {
+    // Professional color gradient combinations
+    const gradients = [
+      'from-blue-500 to-blue-600',
+      'from-indigo-500 to-indigo-600',
+      'from-purple-500 to-purple-600',
+      'from-emerald-500 to-emerald-600',
+      'from-cyan-500 to-cyan-600',
+      'from-teal-500 to-teal-600',
+      'from-violet-500 to-violet-600',
+      'from-fuchsia-500 to-fuchsia-600',
+      'from-rose-500 to-rose-600',
+      'from-orange-500 to-orange-600'
+    ];
+    
+    // Cache to keep consistent colors for categories within a session
+    const categoryColors = new Map();
+    let currentIndex = 0;
+    
+    return (category) => {
+      if (!categoryColors.has(category)) {
+        categoryColors.set(category, gradients[currentIndex % gradients.length]);
+        currentIndex++;
+      }
+      return categoryColors.get(category);
+    };
+  })();
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
+      {/* Copied Toast */}
+      {showCopiedToast && (
+        <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50 animate-fade-in-out">
+          Link copied to clipboard!
+        </div>
+      )}
       
       <main className="flex-grow container mx-auto px-4 py-8">
         {loading ? (
@@ -152,10 +207,23 @@ export default function GigDetail() {
               
               <h1 className="text-3xl font-bold mb-4">{gig.title}</h1>
               
-              <div className="mb-6">
-                <span className="inline-block px-3 py-1 bg-indigo-600 rounded-full text-sm font-medium">
-                  {gig.category}
-                </span>
+              <div className="mb-6 flex flex-wrap gap-2">
+                {(() => {
+                  try {
+                    const categories = typeof gig.categories === 'string' ? JSON.parse(gig.categories) : (Array.isArray(gig.categories) ? gig.categories : []);
+                    return categories.map((category, index) => (
+                      <span 
+                        key={index}
+                        className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r ${getRandomGradient(category)} text-white shadow-lg hover:scale-105 transition-transform`}
+                      >
+                        {category}
+                      </span>
+                    ));
+                  } catch (e) {
+                    console.error('Error parsing categories:', e);
+                    return <span className="text-gray-400 text-sm">No categories specified</span>;
+                  }
+                })()}
               </div>
               
               <div className="mb-8">
@@ -204,9 +272,10 @@ export default function GigDetail() {
                 </button>
                 
                 <button
-                  className="w-full py-3 px-4 border border-gray-700 hover:bg-gray-800 rounded-md text-white transition-colors flex items-center justify-center"
+                  onClick={handleShare}
+                  className="w-full py-3 px-4 border border-gray-700 hover:bg-gray-800 rounded-md text-white transition-colors flex items-center justify-center group"
                 >
-                  <ShareIcon className="h-5 w-5 mr-2" />
+                  <ShareIcon className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" />
                   Share Gig
                 </button>
               </div>
@@ -225,6 +294,18 @@ export default function GigDetail() {
           </div>
         )}
       </main>
+      
+      <style jsx>{`
+        @keyframes fadeInOut {
+          0% { opacity: 0; transform: translateY(-10px); }
+          10% { opacity: 1; transform: translateY(0); }
+          90% { opacity: 1; transform: translateY(0); }
+          100% { opacity: 0; transform: translateY(-10px); }
+        }
+        .animate-fade-in-out {
+          animation: fadeInOut 2s ease-in-out;
+        }
+      `}</style>
       
       <ChatBox
         isOpen={isChatOpen}
