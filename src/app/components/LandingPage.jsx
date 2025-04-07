@@ -154,7 +154,7 @@ export default function LandingPage({ onGetStarted }) {
             <div className="relative z-10 pt-4 sm:pt-8">
               <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-8">
                 <span className="block leading-[1.1] sm:leading-[0.9]">The first</span>
-                <span className="text-[#60A5FA] block leading-[1.1] sm:leading-[0.9] my-2">community-based@nac</span>
+                <span className="text-[#60A5FA] block leading-[1.1] sm:leading-[0.9] my-2">community-based</span>
                 <span className="block leading-[1.1] sm:leading-[0.9]">online marketplace</span>
                 <span className="block leading-[1.1] sm:leading-[0.9]">for all kinds of services</span>
               </h1>
