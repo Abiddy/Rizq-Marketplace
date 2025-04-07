@@ -54,8 +54,12 @@ type Demand = {
   [key: string]: unknown;
 }
 
-// Add type for chat-related state
-// type ChatRecipient = string | null;
+// Add this type at the top with other types
+type UserAvatar = {
+  id: string;
+  avatar_url: string | null;
+  full_name: string | null;
+};
 
 // Add a type for error messages
 type ErrorMessage = string | null;
@@ -82,6 +86,9 @@ export default function Home() {
   // Chat-related state
   // const { openChat } = useChat();
 
+  // Add this state near other state declarations
+  const [userAvatars, setUserAvatars] = useState<UserAvatar[]>([]);
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
@@ -97,6 +104,7 @@ export default function Home() {
         
         // Fetch user profiles
         fetchProfiles();
+        fetchUserAvatars();
       }
     };
     
@@ -112,6 +120,7 @@ export default function Home() {
         // Check if profile is complete for new user
         checkProfileCompleteness(session.user.id);
         fetchProfiles();
+        fetchUserAvatars();
       }
     });
     
@@ -229,6 +238,23 @@ export default function Home() {
     }
   };
 
+  // Add this function after other fetch functions
+  const fetchUserAvatars = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, avatar_url, full_name')
+        .not('avatar_url', 'is', null)
+        .limit(6)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setUserAvatars(data || []);
+    } catch (err) {
+      console.error('Error fetching user avatars:', err);
+    }
+  };
+
   if (!user) {
     if (showAuth) {
       return (
@@ -243,11 +269,57 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#121212]">
-      {/* Add SearchBar here with top margin - just for gigs */}
-      <div className="mt-8 mb-6">
-        <SearchBar />
+      {/* User Avatars Strip - Move it before SearchBar */}
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="flex justify-center">
+          <div className="flex -space-x-2">
+            {userAvatars.map((profile, index) => (
+              <div
+                key={profile.id}
+                className="relative w-8 h-8 border-2 border-[#181818] rounded-full overflow-hidden hover:z-10 transition-transform hover:scale-110"
+                style={{
+                  zIndex: userAvatars.length - index
+                }}
+              >
+                {profile.avatar_url ? (
+                  <img
+                    src={profile.avatar_url}
+                    alt={profile.full_name || 'User'}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.onerror = null;
+                      target.src = `https://ui-avatars.com/api/?name=${profile.full_name || 'U'}&background=random`;
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-800 text-white text-xs">
+                    {(profile.full_name || 'U').charAt(0)}
+                  </div>
+                )}
+              </div>
+            ))}
+            <div className="relative w-8 h-8 border-2 border-[#181818] rounded-full bg-gray-800 flex items-center justify-center">
+              <span className="text-xs text-gray-300">+41</span>
+            </div>
+          </div>
+        </div>
       </div>
-      
+
+      {/* Search Section */}
+      <div className="max-w-7xl mx-auto px-4">
+        <SearchBar />
+        <div className="flex items-center gap-2 mt-2 text-sm">
+          <span className="text-gray-400">Popular:</span>
+          <div className="flex flex-wrap gap-2">
+            <span className="text-gray-300 hover:text-white cursor-pointer">Web Development</span>
+            <span className="text-gray-300 hover:text-white cursor-pointer">Logo Design</span>
+            <span className="text-gray-300 hover:text-white cursor-pointer">Content Writing</span>
+            <span className="text-gray-300 hover:text-white cursor-pointer">Mobile App</span>
+          </div>
+        </div>
+      </div>
+
       {/* Mobile Toggle */}
       <div className="md:hidden bg-[#181818] p-2 flex border-b border-gray-800">
         <button

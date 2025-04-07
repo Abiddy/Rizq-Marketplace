@@ -1,26 +1,32 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 
 export default function LandingNavbar({ onSignIn }) {
   return (
-    <header className="w-full py-4 px-6 bg-white border-b border-gray-100">
+    <header className="w-full py-4 px-6 absolute top-0 z-50">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <div className="flex items-center">
           <Link href="/" className="flex items-center space-x-2">
-            {/* <motion.div 
-              className="w-10 h-10 rounded-md bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg"
+            <motion.div 
               whileHover={{ scale: 1.05 }}
+              className="relative w-12 h-12"
             >
-              R
-            </motion.div> */}
-            <span className="text-xl font-semibold text-gray-900">Rizq</span>
+              <Image
+                src="/rizqnew.png"
+                alt="Rizq Logo"
+                fill
+                className="object-contain"
+                priority
+              />
+            </motion.div>
           </Link>
         </div>
         
         <button 
           onClick={onSignIn}
-          className="px-5 py-2 rounded-full bg-gray-100 text-gray-800 font-medium hover:bg-gray-200 transition-colors"
+          className="px-5 py-2 rounded-full bg-transparent text-white border border-white/50 hover:bg-white/10 transition-colors backdrop-blur-sm"
         >
           Sign in
         </button>

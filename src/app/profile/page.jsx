@@ -90,7 +90,7 @@ export default function ProfilePage() {
       setUserProfile(data);
     } catch (err) {
       console.error('Error fetching user profile:', err);
-      setError('Failed to load profile data');
+      setError('Please update your profile');
     }
   };
 

@@ -26,6 +26,14 @@ export default function EditProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [uploading, setUploading] = useState(false);
 
+  // Add state for field-specific errors
+  const [fieldErrors, setFieldErrors] = useState({
+    fullName: '',
+    username: '',
+    website: '',
+    hourlyRate: ''
+  });
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -131,41 +139,92 @@ export default function EditProfilePage() {
     }
   };
 
+  const checkUsernameAvailability = async (username) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', username)
+      .neq('id', user.id) // Exclude current user
+      .single();
+    
+    return !data; // Return true if username is available
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!fullName.trim()) {
+      errors.fullName = 'Full name is required';
+    }
+    
+    if (!username.trim()) {
+      errors.username = 'Username is required';
+    } else if (username.length < 3) {
+      errors.username = 'Username must be at least 3 characters';
+    }
+    
+    if (website && !website.match(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)) {
+      errors.website = 'Please enter a valid website URL';
+    }
+    
+    if (hourlyRate && (isNaN(hourlyRate) || parseFloat(hourlyRate) < 0)) {
+      errors.hourlyRate = 'Please enter a valid hourly rate';
+    }
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
+    setError(null); // Clear previous errors
     
     try {
+      // Validate required fields
+      if (!fullName.trim() || !username.trim()) {
+        throw new Error('Full name and username are required');
+      }
+
+      // Check username availability
+      const isUsernameAvailable = await checkUsernameAvailability(username);
+      if (!isUsernameAvailable) {
+        throw new Error('Username is already taken');
+      }
+
+      // Validate website format if provided
+      if (website && !website.match(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)) {
+        throw new Error('Please enter a valid website URL');
+      }
+
       const updates = {
         id: user.id,
-        full_name: fullName,
-        username,
-        company_name: company,
-        location,
-        skills,
-        website,
-        bio,
-        hourly_rate: hourlyRate,
+        full_name: fullName.trim(),
+        username: username.trim(),
+        company_name: company.trim(),
+        location: location.trim(),
+        skills: skills.length > 0 ? skills : null, // Handle empty skills array
+        website: website.trim(),
+        bio: bio.trim(),
+        hourly_rate: hourlyRate ? parseFloat(hourlyRate) : null,
         avatar_url: avatarUrl,
-        updated_at: new Date()
+        updated_at: new Date().toISOString()
       };
 
-      console.log("Updating profile with:", updates);
-      console.log("Avatar URL being saved:", avatarUrl);
-
-      const { error } = await supabase
+      const { error: upsertError } = await supabase
         .from('profiles')
         .upsert(updates);
 
-      if (error) throw error;
+      if (upsertError) throw upsertError;
       
-      router.push('/');
+      router.push('/profile');
     } catch (error) {
       console.error('Error updating profile:', error);
-      setError('Error updating your profile');
-    } finally {
-      setSaving(false);
+      setError(error.message || 'Error updating your profile');
+      setSaving(false); // Allow resubmission
+      return; // Prevent navigation
     }
+    setSaving(false);
   };
 
   if (loading) {
@@ -239,10 +298,16 @@ export default function EditProfilePage() {
               <input
                 type="text"
                 value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                onChange={(e) => {
+                  setFullName(e.target.value);
+                  setFieldErrors(prev => ({ ...prev, fullName: '' }));
+                }}
                 required
-                className="w-full bg-gray-800 border border-gray-700 rounded-md py-2 px-3 text-white focus:outline-none focus:border-indigo-500"
+                className={`w-full bg-gray-800 border ${
+                  fieldErrors.fullName ? 'border-red-500' : 'border-gray-700'
+                } rounded-md py-2 px-3 text-white focus:outline-none focus:border-indigo-500`}
               />
+              <FormError message={fieldErrors.fullName} />
             </div>
             
             <div>
@@ -367,13 +432,29 @@ export default function EditProfilePage() {
             <button
               type="submit"
               disabled={saving}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-6 rounded-md transition-colors disabled:opacity-50"
+              className={`${
+                saving 
+                  ? 'bg-indigo-800 cursor-not-allowed' 
+                  : 'bg-indigo-600 hover:bg-indigo-700'
+              } text-white py-2 px-6 rounded-md transition-colors`}
             >
-              {saving ? 'Saving...' : 'Save Profile'}
+              {saving ? (
+                <div className="flex items-center">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Saving...
+                </div>
+              ) : 'Save Profile'}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
-} 
+}
+
+// Add this near the error display
+const FormError = ({ message }) => message ? (
+  <div className="text-red-400 text-sm mt-1">
+    {message}
+  </div>
+) : null; 
