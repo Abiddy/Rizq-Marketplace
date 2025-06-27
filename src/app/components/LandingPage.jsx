@@ -156,16 +156,28 @@ export default function LandingPage({ onGetStarted }) {
                 <span className="block leading-[1.1] sm:leading-[0.9]">The first</span>
                 <span className="text-[#60A5FA] block leading-[1.1] sm:leading-[0.9] my-2">community-based</span>
                 <span className="block leading-[1.1] sm:leading-[0.9]">online marketplace</span>
-                <span className="block leading-[1.1] sm:leading-[0.9]">for all kinds of services</span>
+                <span className="block leading-[1.1] sm:leading-[0.9]">for all digital services</span>
               </h1>
 
+              <p className="text-gray-300 text-lg sm:text-xl mb-8 max-w-2xl mx-auto">
+                Looking for digital solutions for your business? Fill our quick request form to let Rizq help you find the best online solutions!
+              </p>
+
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={onGetStarted}
-                className="px-8 sm:px-10 py-4 sm:py-5 bg-transparent text-white text-base sm:text-lg font-medium rounded-xl border border-white/50 hover:bg-white/10 transition-all backdrop-blur-sm mt-8"
+                whileHover={{ scale: 1.08, boxShadow: '0 8px 32px 0 rgba(80, 80, 80, 0.18)' }}
+                whileTap={{ scale: 0.97 }}
+                animate={{
+                  boxShadow: [
+                    '0 4px 24px 0 rgba(80, 80, 80, 0.10)',
+                    '0 8px 32px 0 rgba(80, 80, 80, 0.18)',
+                    '0 4px 24px 0 rgba(80, 80, 80, 0.10)'
+                  ],
+                  transition: { repeat: Infinity, duration: 1.8, repeatType: 'loop' }
+                }}
+                onClick={() => window.open('https://mtm5pywke9g.typeform.com/to/zAMrB3iu', '_blank')}
+                className="px-10 sm:px-12 py-5 sm:py-6 bg-gradient-to-r from-white via-gray-50 to-white text-black text-lg sm:text-xl font-semibold rounded-full border-0 shadow-xl focus:outline-none focus:ring-4 focus:ring-gray-200 transition-all duration-200"
               >
-                Get started for free
+                Request a Service →
               </motion.button>
             </div>
 
@@ -322,10 +334,10 @@ export default function LandingPage({ onGetStarted }) {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={onGetStarted}
+            onClick={() => window.open('https://mtm5pywke9g.typeform.com/to/zAMrB3iu', '_blank')}
             className="px-8 py-4 bg-blue-900/20 text-blue-300 text-lg font-medium rounded-lg hover:bg-blue-900/30 transition-all backdrop-blur-sm"
           >
-            Join Now
+            Request a service →
           </motion.button>
         </motion.div>
       </div>
